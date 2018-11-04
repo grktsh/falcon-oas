@@ -1,0 +1,9 @@
+*.pyc
+*.egg-info/
+
+/.coverage
+/.eggs/
+/.tox/
+/build/
+/dist/
+/falcon_oas/__version__.py

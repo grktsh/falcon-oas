@@ -1,0 +1,14 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+
+[dev-packages]
+falcon-oas = {editable = true, extras = ["format", "test"], path = "."}
+setuptools-scm = "*"
+pre-commit = "*"
+
+[requires]
+python_version = "3.7"
