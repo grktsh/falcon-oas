@@ -9,6 +9,7 @@ name = "pypi"
 falcon-oas = {editable = true, extras = ["format", "test"], path = "."}
 setuptools-scm = "*"
 pre-commit = "*"
+twine = "*"
 
 [requires]
 python_version = "3.7"
