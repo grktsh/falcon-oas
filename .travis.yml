@@ -1,5 +1,4 @@
 language: python
-sudo: required
 dist: xenial
 python:
   - '2.7'
@@ -8,3 +7,17 @@ install:
   - pip install tox-travis
 script:
   - tox
+before_deploy:
+  - pip install pipenv
+  - pipenv install --dev
+  - pipenv run python setup.py sdist bdist_wheel
+deploy:
+  provider: releases
+  api_key:
+    secure: K9JBSQhRe4JkvCU9bc3njBSPA6911kusIBnWoNLvz8LE0KAL690ZGwsQ7kKSKCy1AybljnR1FXczk8riiSd2rcm/UcquEciCwoG+UVF6zTi84+JTwHkfv4UK1XsbncpazWDqvnPA2p5+zjHvb6NUo16V7tagt/kVGHT57atc8/erQqKkDPQkP+rp2tkzZtSF1bxMqWwD33hC9cNL9MCXuH5Klo2Y1mYLXGY5+LGsqR4bIwuYaqyXluv2nwzMCFhw4QVh2jZIjYI4ZHfVlF1eh0KDHISVEWlmPXeCXpDZfeC76SuitWHZ8UdILWCe+yr8hNJNRU7u1S+tsZvkRdADy//8n6nTWZXdXIt6NzHMHFWIIfavv2cScS4Z+kVnA6GqhjDaOc6QJQtzVJFJbWZpwRP2QVtZwJBOsizoDxAkCL7hbZCxE3a2/0r89Ors9JEi7L9dO36UyFV1fTmURlsust4T3COOkNdPe47y2uHJvUnjJafxCJxHQUM7b9nDNHSSYtWymxhkWSpDRQAX5aMcByqmX5Bo8aubo75qtDUzeO1TXq3juX8cK5/aheKw90MhImeyKMNe3tICg4YQEdeOXZ+qcf/LBjcpBZiQNRU+LEEKifYyTtanDPYv1alEnfNIRxLFINPSC2xwoVRrQN143ccCK8nRrdO9BoRcOttpefA=
+  file_glob: true
+  file: dist/*
+  skip_cleanup: true
+  on:
+    tags: true
+    python: '3.7'
