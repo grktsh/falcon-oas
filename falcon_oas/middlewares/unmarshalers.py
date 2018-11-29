@@ -9,18 +9,10 @@ from ..oas.exceptions import RequestBodyError
 from ..oas.exceptions import UnmarshalError
 
 
-class FalconOASRequest(object):
+class _RequestAdapter(object):
     def __init__(self, req, params):
         self.req = req
         self.params = params
-
-    @property
-    def full_path(self):
-        return self.req.uri_template
-
-    @property
-    def method(self):
-        return self.req.method.lower()
 
     @property
     def parameters(self):
@@ -47,9 +39,9 @@ class RequestUnmarshaler(object):
         self.unmarshal_request_body = request_body.unmarshal
 
     def process_resource(self, req, resp, resource, params):
-        oas_req = FalconOASRequest(req, params)
-
-        operation = self.spec.get_operation(oas_req.full_path, oas_req.method)
+        operation = self.spec.get_operation(
+            req.uri_template, req.method.lower()
+        )
         if operation is None:
             # Undocumented request
             return
@@ -57,6 +49,7 @@ class RequestUnmarshaler(object):
         parameters_error = None
         request_body_error = None
 
+        oas_req = _RequestAdapter(req, params)
         try:
             parameters = self.unmarshal_parameters(
                 oas_req.parameters, operation['parameters']
