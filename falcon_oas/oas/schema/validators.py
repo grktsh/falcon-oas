@@ -14,10 +14,11 @@ from .parsers import DEFAULT_PARSERS
 
 class SchemaValidator(object):
     def __init__(self, spec, parsers=None):
-        self.spec = spec
         format_checker = _create_format_checker_from_parsers(parsers)
         self.validator = Draft4Validator(
-            spec, resolver=spec.resolver, format_checker=format_checker
+            spec.spec_dict,
+            resolver=spec.resolver,
+            format_checker=format_checker,
         )
 
     def validate(self, instance, schema):
