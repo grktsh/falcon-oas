@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 
 import falcon
 
+from .middlewares.security import get_security_schemes
+from .middlewares.security import SecurityMiddleware
 from .middlewares.unmarshalers import RequestUnmarshaler
 from .oas.exceptions import UnmarshalError
 from .oas.parameters.unmarshalers import ParametersUnmarshaler
@@ -24,11 +26,17 @@ def create_api(
 ):
     spec = create_spec_from_dict(spec_dict, base_path=base_path)
 
-    request_unmarshaler = create_request_unmarshaler(spec, parsers=parsers)
-    api = falcon.API(
-        middleware=[request_unmarshaler] + (middlewares or []),
-        request_type=Request,
+    default_middlewares = []
+    security_schemes = get_security_schemes(spec_dict, base_module=base_module)
+    if security_schemes:
+        default_middlewares.append(SecurityMiddleware(spec, security_schemes))
+    default_middlewares.append(
+        create_request_unmarshaler(spec, parsers=parsers)
     )
+    if middlewares:
+        default_middlewares.extend(middlewares)
+
+    api = falcon.API(middleware=default_middlewares, request_type=Request)
     api.req_options.auto_parse_qs_csv = False
     api.add_error_handler(falcon.HTTPError, http_error_handler)
     api.add_error_handler(UnmarshalError, unmarshal_error_handler)

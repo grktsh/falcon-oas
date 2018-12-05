@@ -8,6 +8,7 @@ import pytest
 
 from falcon_oas.oas.spec import create_spec_from_dict
 from falcon_oas.oas.spec import get_base_path
+from falcon_oas.oas.spec import get_security
 from tests.helpers import yaml_load_dedent
 
 
@@ -112,6 +113,23 @@ def test_spec_get_operation_undocumented_request():
     assert spec.get_operation('/path', 'get') is None
 
 
+def test_spec_get_operation_security():
+    spec = create_spec_from_dict(
+        yaml_load_dedent(
+            """\
+            paths:
+              /path:
+                get:
+                  security:
+                  - test_scheme:
+                    - test_scope
+            """
+        )
+    )
+    operation = spec.get_operation('/path', 'get')
+    assert operation['security'] == [{'test_scheme': ['test_scope']}]
+
+
 @pytest.mark.parametrize(
     'spec_dict,expected',
     [
@@ -129,3 +147,16 @@ def test_spec_get_operation_undocumented_request():
 )
 def test_base_path(spec_dict, expected):
     assert get_base_path(spec_dict) == expected
+
+
+@pytest.mark.parametrize(
+    'spec_dict,base_security,expected',
+    [
+        ({}, None, None),
+        ({}, [], []),
+        ({'security': []}, None, []),
+        ({'security': []}, [{'test_scheme': []}], []),
+    ],
+)
+def test_security(spec_dict, base_security, expected):
+    assert get_security(spec_dict, base_security=base_security) == expected

@@ -25,6 +25,7 @@ class Spec(object):
         self.base_path = (
             base_path if base_path is not None else get_base_path(spec_dict)
         )
+        self._base_security = get_security(spec_dict)
 
     def deref(self, schema):
         while '$ref' in schema:
@@ -51,6 +52,9 @@ class Spec(object):
             result['requestBody'] = self.deref(operation['requestBody'])
         except KeyError:
             pass
+        result['security'] = get_security(
+            result, base_security=self._base_security
+        )
         return result
 
     def _iter_parameters(self, path_item, operation):
@@ -73,3 +77,10 @@ def get_base_path(spec_dict):
     except (KeyError, IndexError):
         server = DEFAULT_SERVER
     return urlparse(server['url']).path.rstrip('/')
+
+
+def get_security(spec_dict, base_security=None):
+    try:
+        return spec_dict['security']
+    except KeyError:
+        return base_security
