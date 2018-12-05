@@ -7,7 +7,7 @@ import falcon
 from six import iteritems
 
 from ..extensions import X_USER_LOADER
-from ..utils import import_class_or_function
+from ..utils import import_string
 
 
 class SecurityMiddleware(object):
@@ -74,7 +74,7 @@ def get_security_schemes(spec_dict, base_module=''):
         return {
             key: (
                 security_scheme,
-                import_class_or_function(
+                import_string(
                     security_scheme[X_USER_LOADER], base_module=base_module
                 ),
             )

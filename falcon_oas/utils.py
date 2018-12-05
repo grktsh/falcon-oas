@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import importlib
 
 
-def import_class_or_function(name, base_module=''):
+def import_string(name, base_module=''):
     if base_module and not base_module.endswith('.'):
         base_module += '.'
 

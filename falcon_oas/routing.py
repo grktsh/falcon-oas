@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from six import iteritems
 
 from .extensions import X_FALCON_RESOURCE
-from .utils import import_class_or_function
+from .utils import import_string
 
 
 def generate_routes(spec, base_module=''):
@@ -16,7 +16,7 @@ def generate_routes(spec, base_module=''):
         except KeyError:
             pass
         else:
-            resource_class = import_class_or_function(
+            resource_class = import_string(
                 resource_name, base_module=base_module
             )
             yield spec.base_path + path, resource_class()
