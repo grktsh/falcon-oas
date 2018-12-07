@@ -4,6 +4,7 @@
 /.coverage
 /.eggs/
 /.tox/
+/coverage.xml
 /build/
 /dist/
 /falcon_oas/__version__.py
