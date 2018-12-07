@@ -38,7 +38,11 @@ class SecurityMiddleware(object):
         )
 
     def _satisfy_scheme(self, req, key, scopes):
-        security_scheme, user_loader = self.security_schemes[key]
+        try:
+            security_scheme, user_loader = self.security_schemes[key]
+        except KeyError:
+            return True
+
         if security_scheme['type'] == 'apiKey':
             location = security_scheme['in']
             name = security_scheme['name']

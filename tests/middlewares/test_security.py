@@ -143,6 +143,26 @@ def test_unsupported_type(key):
     assert req.context == {}
 
 
+def test_without_user_loader():
+    req = falcon.Request(testing.create_environ(path='/path'))
+    req.uri_template = req.path
+    resp = falcon.Response()
+
+    spec_dict = {
+        'paths': {
+            '/path': {
+                'get': {'security': [{'scheme_without_user_loader': []}]}
+            }
+        }
+    }
+    empty_security_schemes = {}
+    spec = create_spec_from_dict(spec_dict)
+    middleware = SecurityMiddleware(spec, empty_security_schemes)
+    middleware.process_resource(req, resp, RESOURCE, {})
+
+    assert req.context == {}
+
+
 def test_get_api_key_cookie():
     req = falcon.Request(
         testing.create_environ(headers={'Cookie': str('session=value')})
