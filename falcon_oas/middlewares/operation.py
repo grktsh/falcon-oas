@@ -12,6 +12,14 @@ class _RequestAdapter(object):
         self.params = params
 
     @property
+    def uri_template(self):
+        return self.req.uri_template
+
+    @property
+    def method(self):
+        return self.req.method.lower()
+
+    @property
     def parameters(self):
         return {
             'query': self.req.params,
@@ -34,9 +42,11 @@ class OperationMiddleware(object):
         self.spec = spec
 
     def process_resource(self, req, resp, resource, params):
+        oas_req = _RequestAdapter(req, params)
+
         operation = self.spec.get_operation(
-            req.uri_template, req.method.lower()
+            oas_req.uri_template, oas_req.method, oas_req.media_type
         )
 
         req.context['oas._operation'] = operation
-        req.context['oas._request'] = _RequestAdapter(req, params)
+        req.context['oas._request'] = oas_req

@@ -76,7 +76,7 @@ def test_spec_get_operation_parameters():
         )
     )
 
-    operation = spec.get_operation('/path', 'get')
+    operation = spec.get_operation('/path', 'get', None)
     assert operation['parameters'] == [
         {'name': 'param1', 'in': 'query'},
         {'name': 'param2', 'in': 'path'},
@@ -85,7 +85,8 @@ def test_spec_get_operation_parameters():
     assert 'requestBody' not in operation
 
 
-def test_spec_get_operation_request_body():
+@pytest.mark.parametrize('media_type', ['application/json', 'text/plain'])
+def test_spec_get_operation_request_body(media_type):
     spec = create_spec_from_dict(
         yaml_load_dedent(
             """\
@@ -93,24 +94,53 @@ def test_spec_get_operation_request_body():
               /path:
                 get:
                   requestBody:
-                    content: {}
+                    content:
+                      application/json: {}
             """
         )
     )
 
-    operation = spec.get_operation('/path', 'get')
+    operation = spec.get_operation('/path', 'get', media_type)
     assert operation['parameters'] == []
-    assert operation['requestBody'] == {'content': {}}
+    assert operation['requestBody'] == {'content': {'application/json': {}}}
+
+
+def test_spec_get_operation_request_body_deref():
+    spec = create_spec_from_dict(
+        yaml_load_dedent(
+            """\
+            paths:
+              /path:
+                post:
+                  requestBody:
+                    $ref: '#components/requestBodies/test_body'
+            components:
+              requestBodies:
+                test_body:
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#components/schemas/test_schema'
+              schemas:
+                test_schema:
+                  type: string
+            """
+        )
+    )
+    operation = spec.get_operation('/path', 'post', 'application/json')
+    assert operation['requestBody'] == {
+        'content': {'application/json': {'schema': {'type': 'string'}}}
+    }
 
 
 def test_spec_get_operation_foreign_base_path():
     spec = create_spec_from_dict({'servers': [{'url': '/api'}], 'paths': {}})
-    assert spec.get_operation('/path', 'get') is None
+    assert spec.get_operation('/path', 'get', None) is None
 
 
 def test_spec_get_operation_undocumented_request():
     spec = create_spec_from_dict({})
-    assert spec.get_operation('/path', 'get') is None
+    assert spec.get_operation('/path', 'get', None) is None
 
 
 def test_spec_get_operation_security():
@@ -126,7 +156,7 @@ def test_spec_get_operation_security():
             """
         )
     )
-    operation = spec.get_operation('/path', 'get')
+    operation = spec.get_operation('/path', 'get', None)
     assert operation['security'] == [{'test_scheme': ['test_scope']}]
 
 

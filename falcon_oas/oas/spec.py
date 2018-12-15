@@ -33,11 +33,11 @@ class Spec(object):
         return schema
 
     @lru_cache(maxsize=None)
-    def get_operation(self, full_path, method):
-        if not full_path.startswith(self.base_path):
+    def get_operation(self, uri_template, method, media_type):
+        if not uri_template.startswith(self.base_path):
             return None
 
-        path = full_path[len(self.base_path) :]
+        path = uri_template[len(self.base_path) :]
         try:
             path_item = self.deref(self.spec_dict['paths'][path])
             operation = path_item[method]
@@ -49,7 +49,9 @@ class Spec(object):
             self._iter_parameters(path_item, operation)
         )
         try:
-            result['requestBody'] = self.deref(operation['requestBody'])
+            result['requestBody'] = self._deref_request_body(
+                operation, media_type
+            )
         except KeyError:
             pass
         result['security'] = get_security(
@@ -69,6 +71,18 @@ class Spec(object):
                     continue
                 seen.add(key)
                 yield parameter_spec_dict
+
+    def _deref_request_body(self, operation, media_type):
+        result = self.deref(operation['requestBody'])
+        try:
+            # TODO: Support media type range
+            media_type_spec_dict = result['content'][media_type]
+            schema = media_type_spec_dict['schema']
+        except KeyError:
+            pass
+        else:
+            media_type_spec_dict['schema'] = self.deref(schema)
+        return result
 
 
 def get_base_path(spec_dict):
