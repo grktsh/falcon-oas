@@ -9,6 +9,7 @@ from falcon import testing
 
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.oas.spec import create_spec_from_dict
+from tests.helpers import yaml_load_dedent
 
 
 def create_app(spec_dict):
@@ -23,6 +24,29 @@ def test_undocumented_request(resource):
 
     client = testing.TestClient(app)
     client.simulate_get(path='/undocumented')
+
+    req = resource.captured_req
+    assert req.context['oas._operation'] is None
+
+
+def test_undocumented_media_type(resource):
+    spec_dict = yaml_load_dedent(
+        """\
+        paths:
+          /path:
+            get:
+              requestBody:
+                content:
+                  application/json: {}
+        """
+    )
+    app = create_app(spec_dict)
+    app.add_route('/path', resource)
+
+    client = testing.TestClient(app)
+    client.simulate_get(
+        path='/path', headers={'Content-Type': str('text/plain')}
+    )
 
     req = resource.captured_req
     assert req.context['oas._operation'] is None
