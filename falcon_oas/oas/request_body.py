@@ -24,13 +24,7 @@ class RequestBodyUnmarshaler(object):
             # Should return unique object instead of None?
             return None
 
-        try:
-            media_type_spec_dict = request_body_spec_dict['content'][
-                media_type
-            ]
-        except KeyError:
-            # Undocumented media type
-            return value
+        media_type_spec_dict = request_body_spec_dict['content'][media_type]
 
         try:
             return self._unmarshal(value, media_type_spec_dict)
@@ -44,7 +38,6 @@ class RequestBodyUnmarshaler(object):
             # Undocumented schema
             return value
 
-        schema = self.spec.deref(schema)
         self.validator.validate(value, schema)
         value = self.unmarshaler.unmarshal(value, schema)
         return value

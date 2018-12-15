@@ -53,17 +53,6 @@ def test_missing_optional(unmarshaler, media_type):
     assert unmarshaled is None
 
 
-def test_undocumented_media_type(unmarshaler, media_type):
-    def get_value():
-        return 'foo'
-
-    request_body_spec_dict = {'content': {}}
-    unmarshaled = unmarshaler.unmarshal(
-        get_value, media_type, request_body_spec_dict
-    )
-    assert unmarshaled == 'foo'
-
-
 def test_undocumented_media_type_schema(unmarshaler, media_type):
     def get_value():
         return 'foo'

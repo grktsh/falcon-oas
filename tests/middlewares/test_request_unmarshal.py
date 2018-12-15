@@ -38,6 +38,30 @@ def test_undocumented_request(resource):
     assert 'oas.request_body' not in req.context
 
 
+def test_undocumented_media_type(resource):
+    spec_dict = yaml_load_dedent(
+        """\
+        paths:
+          /path:
+            get:
+              requestBody:
+                content:
+                  application/json: {}
+        """
+    )
+    app = create_app(spec_dict)
+    app.add_route('/path', resource)
+
+    client = testing.TestClient(app)
+    client.simulate_get(
+        path='/path', headers={'Content-Type': str('text/plain')}
+    )
+
+    req = resource.captured_req
+    assert 'oas.parameters' not in req.context
+    assert 'oas.request_body' not in req.context
+
+
 def test_success(resource):
     spec_dict = yaml_load_dedent(
         """\
@@ -100,6 +124,41 @@ def test_success_without_request_body(resource):
     assert req.context['oas.parameters'] == {}
     assert 'oas.request_body' not in req.context
     assert resource.captured_kwargs == {}
+
+
+def test_success_request_body_with_ref(resource):
+    spec_dict = yaml_load_dedent(
+        """\
+        paths:
+          /path:
+            post:
+              requestBody:
+                $ref: '#components/requestBodies/test_body'
+        components:
+          requestBodies:
+            test_body:
+              content:
+                application/json:
+                  schema:
+                    $ref: '#components/schemas/test_schema'
+          schemas:
+            test_schema:
+              type: string
+        """
+    )
+    app = create_app(spec_dict)
+    app.add_route('/path', resource)
+
+    client = testing.TestClient(app)
+    client.simulate_post(
+        path='/path',
+        headers={'Content-Type': str('application/json')},
+        body='"foo"',
+    )
+
+    req = resource.captured_req
+    assert req.context['oas.parameters'] == {}
+    assert req.context['oas.request_body'] == 'foo'
 
 
 def test_errors(resource):
