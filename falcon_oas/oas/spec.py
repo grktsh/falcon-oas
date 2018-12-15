@@ -11,6 +11,8 @@ except ImportError:  # pragma: no cover
     from functools32 import lru_cache
 from six.moves.urllib_parse import urlparse
 
+from .exceptions import UndocumentedRequest, UndocumentedMediaType
+
 DEFAULT_SERVER = {'url': '/'}
 
 
@@ -35,14 +37,14 @@ class Spec(object):
     @lru_cache(maxsize=None)
     def get_operation(self, uri_template, method, media_type):
         if not uri_template.startswith(self.base_path):
-            return None
+            raise UndocumentedRequest()
 
         path = uri_template[len(self.base_path) :]
         try:
             path_item = self.deref(self.spec_dict['paths'][path])
             operation = path_item[method]
         except KeyError:
-            return None
+            raise UndocumentedRequest()
 
         result = operation.copy()
         result['parameters'] = list(
@@ -77,6 +79,9 @@ class Spec(object):
         try:
             # TODO: Support media type range
             media_type_spec_dict = result['content'][media_type]
+        except KeyError:
+            raise UndocumentedMediaType()
+        try:
             schema = media_type_spec_dict['schema']
         except KeyError:
             pass

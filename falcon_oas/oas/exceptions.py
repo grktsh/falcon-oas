@@ -8,6 +8,14 @@ class _Error(Exception):
     pass
 
 
+class UndocumentedRequest(_Error):
+    pass
+
+
+class UndocumentedMediaType(UndocumentedRequest):
+    pass
+
+
 class ValidationError(_Error):
     def __init__(self, errors):
         super(ValidationError, self).__init__()
@@ -95,15 +103,6 @@ class MissingParameter(ParameterError):
 
         errors = [_MissingParameter()]
         super(MissingParameter, self).__init__(name, location, errors)
-
-
-class MissingMediaType(RequestBodyError):
-    def __init__(self):
-        class _MissingMediaType(_ValidationError):
-            validator = 'required'
-            message = 'media type is required'
-
-        super(MissingMediaType, self).__init__([_MissingMediaType()])
 
 
 class MissingRequestBody(RequestBodyError):

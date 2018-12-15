@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 
 import jsonschema
 
-from falcon_oas.oas.exceptions import MissingMediaType
 from falcon_oas.oas.exceptions import MissingParameter
 from falcon_oas.oas.exceptions import MissingRequestBody
 from falcon_oas.oas.exceptions import ParameterError
@@ -17,7 +16,8 @@ from falcon_oas.oas.exceptions import UnmarshalError
 
 def test_unmarshal_error():
     error = UnmarshalError(
-        ParametersError([MissingParameter('p1', 'query')]), MissingMediaType()
+        ParametersError([MissingParameter('p1', 'query')]),
+        MissingRequestBody('application/json'),
     )
     assert error.to_dict() == {
         'parameters': {
@@ -30,7 +30,7 @@ def test_unmarshal_error():
             ]
         },
         'request_body': [
-            {'validator': 'required', 'message': 'media type is required'}
+            {'validator': 'required', 'message': 'request body is required'}
         ],
     }
 
@@ -104,15 +104,6 @@ def test_request_body_validation_errors():
                 'validator': 'format',
                 'message': "u'2018/01/02' is not a u'date'",
             },
-        ]
-    }
-
-
-def test_request_body_missing_media_type():
-    error = MissingMediaType()
-    assert error.to_dict() == {
-        'request_body': [
-            {'validator': 'required', 'message': 'media type is required'}
         ]
     }
 

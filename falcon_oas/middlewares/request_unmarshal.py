@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..oas.exceptions import MissingMediaType
 from ..oas.exceptions import ParametersError
 from ..oas.exceptions import RequestBodyError
 from ..oas.exceptions import UnmarshalError
@@ -36,9 +35,6 @@ class RequestUnmarshalMiddleware(object):
 
         if 'requestBody' in operation:
             try:
-                if oas_req.media_type is None:
-                    raise MissingMediaType()
-
                 request_body = self.unmarshal_request_body(
                     oas_req.get_media,
                     oas_req.media_type,

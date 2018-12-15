@@ -6,6 +6,8 @@ from __future__ import unicode_literals
 
 import pytest
 
+from falcon_oas.oas.exceptions import UndocumentedMediaType
+from falcon_oas.oas.exceptions import UndocumentedRequest
 from falcon_oas.oas.spec import create_spec_from_dict
 from falcon_oas.oas.spec import get_base_path
 from falcon_oas.oas.spec import get_security
@@ -85,8 +87,7 @@ def test_spec_get_operation_parameters():
     assert 'requestBody' not in operation
 
 
-@pytest.mark.parametrize('media_type', ['application/json', 'text/plain'])
-def test_spec_get_operation_request_body(media_type):
+def test_spec_get_operation_request_body():
     spec = create_spec_from_dict(
         yaml_load_dedent(
             """\
@@ -100,9 +101,27 @@ def test_spec_get_operation_request_body(media_type):
         )
     )
 
-    operation = spec.get_operation('/path', 'get', media_type)
+    operation = spec.get_operation('/path', 'get', 'application/json')
     assert operation['parameters'] == []
     assert operation['requestBody'] == {'content': {'application/json': {}}}
+
+
+def test_spec_get_operation_request_body_undocumented_media_type():
+    spec = create_spec_from_dict(
+        yaml_load_dedent(
+            """\
+            paths:
+              /path:
+                get:
+                  requestBody:
+                    content:
+                      application/json: {}
+            """
+        )
+    )
+
+    with pytest.raises(UndocumentedMediaType):
+        spec.get_operation('/path', 'get', 'text/plain')
 
 
 def test_spec_get_operation_request_body_deref():
@@ -133,14 +152,16 @@ def test_spec_get_operation_request_body_deref():
     }
 
 
-def test_spec_get_operation_foreign_base_path():
+def test_spec_get_operation_unknown_base_path():
     spec = create_spec_from_dict({'servers': [{'url': '/api'}], 'paths': {}})
-    assert spec.get_operation('/path', 'get', None) is None
+    with pytest.raises(UndocumentedRequest):
+        spec.get_operation('/path', 'get', None)
 
 
-def test_spec_get_operation_undocumented_request():
+def test_spec_get_operation_undocumented_operation():
     spec = create_spec_from_dict({})
-    assert spec.get_operation('/path', 'get', None) is None
+    with pytest.raises(UndocumentedRequest):
+        spec.get_operation('/path', 'get', None)
 
 
 def test_spec_get_operation_security():

@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 
 from falcon import CaseInsensitiveDict
 
+from ..oas.exceptions import UndocumentedRequest
+
 
 class _RequestAdapter(object):
     def __init__(self, req, params):
@@ -44,9 +46,12 @@ class OperationMiddleware(object):
     def process_resource(self, req, resp, resource, params):
         oas_req = _RequestAdapter(req, params)
 
-        operation = self.spec.get_operation(
-            oas_req.uri_template, oas_req.method, oas_req.media_type
-        )
+        try:
+            operation = self.spec.get_operation(
+                oas_req.uri_template, oas_req.method, oas_req.media_type
+            )
+        except UndocumentedRequest:
+            operation = None
 
         req.context['oas._operation'] = operation
         req.context['oas._request'] = oas_req

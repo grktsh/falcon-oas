@@ -8,7 +8,7 @@ import falcon
 import pytest
 from falcon import testing
 
-from falcon_oas.oas.exceptions import MissingMediaType
+from falcon_oas.oas.exceptions import MissingRequestBody
 from falcon_oas.oas.exceptions import UnmarshalError
 from falcon_oas.problems import _Problem
 from falcon_oas.problems import http_error_handler
@@ -42,14 +42,16 @@ def test_problem_to_dict_without_description():
 
 
 def test_unmarshal_problem():
-    unmarshal_error = UnmarshalError(request_body_error=MissingMediaType())
+    unmarshal_error = UnmarshalError(
+        request_body_error=MissingRequestBody('application/json')
+    )
     problem = UnmarshalProblem(unmarshal_error)
 
     assert problem.to_dict() == {
         'title': 'Unmarshal Error',
         'status': 400,
         'request_body': [
-            {'validator': 'required', 'message': 'media type is required'}
+            {'validator': 'required', 'message': 'request body is required'}
         ],
     }
 
@@ -100,7 +102,9 @@ def test_http_error_handler():
 
 
 def test_validation_error_handler():
-    unmarshal_error = UnmarshalError(request_body_error=MissingMediaType())
+    unmarshal_error = UnmarshalError(
+        request_body_error=MissingRequestBody('application/json')
+    )
     req = falcon.Request(testing.create_environ())
     resp = falcon.Response()
     params = {}

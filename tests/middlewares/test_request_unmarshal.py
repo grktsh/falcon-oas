@@ -143,32 +143,3 @@ def test_errors(resource):
     assert errors[0].message == "3 is not of type 'string'"
 
     assert resource.called is False
-
-
-def test_missing_media_type(resource):
-    spec_dict = yaml_load_dedent(
-        """\
-        paths:
-          /path:
-            post:
-              requestBody:
-                content:
-                  application/json:
-                    schema:
-                      type: integer
-        """
-    )
-    app = create_app(spec_dict)
-    app.add_route('/path', resource)
-
-    client = testing.TestClient(app)
-    with pytest.raises(UnmarshalError) as exc_info:
-        client.simulate_post(path='/path', body='3')
-
-    assert exc_info.value.parameters_error is None
-    errors = exc_info.value.request_body_error.errors
-    assert errors[0].path is None
-    assert errors[0].validator == 'required'
-    assert errors[0].message == 'media type is required'
-
-    assert resource.called is False
