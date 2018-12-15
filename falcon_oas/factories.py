@@ -5,9 +5,10 @@ from __future__ import unicode_literals
 
 import falcon
 
+from .middlewares.operation import OperationMiddleware
+from .middlewares.request_unmarshal import RequestUnmarshalMiddleware
 from .middlewares.security import get_security_schemes
 from .middlewares.security import SecurityMiddleware
-from .middlewares.unmarshalers import RequestUnmarshaler
 from .oas.exceptions import UnmarshalError
 from .oas.parameters.unmarshalers import ParametersUnmarshaler
 from .oas.request_body import RequestBodyUnmarshaler
@@ -26,12 +27,12 @@ def create_api(
 ):
     spec = create_spec_from_dict(spec_dict, base_path=base_path)
 
-    default_middlewares = []
+    default_middlewares = [OperationMiddleware(spec)]
     security_schemes = get_security_schemes(spec_dict, base_module=base_module)
     if security_schemes:
-        default_middlewares.append(SecurityMiddleware(spec, security_schemes))
+        default_middlewares.append(SecurityMiddleware(security_schemes))
     default_middlewares.append(
-        create_request_unmarshaler(spec, parsers=parsers)
+        create_request_unmarshal_middleware(spec, parsers=parsers)
     )
     if middlewares:
         default_middlewares.extend(middlewares)
@@ -49,7 +50,7 @@ def create_api(
     return api
 
 
-def create_request_unmarshaler(spec, parsers=None):
+def create_request_unmarshal_middleware(spec, parsers=None):
     schema_validator = SchemaValidator(spec, parsers=parsers)
     schema_unmarshaler = SchemaUnmarshaler(spec, parsers=parsers)
     parameters_unmarshaler = ParametersUnmarshaler(
@@ -58,6 +59,6 @@ def create_request_unmarshaler(spec, parsers=None):
     request_body_unmarshaler = RequestBodyUnmarshaler(
         spec, schema_validator, schema_unmarshaler
     )
-    return RequestUnmarshaler(
-        spec, parameters_unmarshaler, request_body_unmarshaler
+    return RequestUnmarshalMiddleware(
+        parameters_unmarshaler, request_body_unmarshaler
     )

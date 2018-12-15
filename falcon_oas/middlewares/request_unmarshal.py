@@ -9,47 +9,20 @@ from ..oas.exceptions import RequestBodyError
 from ..oas.exceptions import UnmarshalError
 
 
-class _RequestAdapter(object):
-    def __init__(self, req, params):
-        self.req = req
-        self.params = params
-
-    @property
-    def parameters(self):
-        return {
-            'query': self.req.params,
-            'header': self.req.headers,
-            'path': self.params,
-            'cookie': self.req.cookies,
-        }
-
-    @property
-    def media_type(self):
-        content_type = self.req.content_type
-        return content_type and content_type.split(';', 1)[0]
-
-    def get_media(self):
-        return self.req.media
-
-
-class RequestUnmarshaler(object):
-    def __init__(self, spec, parameters, request_body):
-        self.spec = spec
+class RequestUnmarshalMiddleware(object):
+    def __init__(self, parameters, request_body):
         self.unmarshal_parameters = parameters.unmarshal
         self.unmarshal_request_body = request_body.unmarshal
 
     def process_resource(self, req, resp, resource, params):
-        operation = self.spec.get_operation(
-            req.uri_template, req.method.lower()
-        )
+        operation = req.context['oas._operation']
         if operation is None:
-            # Undocumented request
             return
 
         parameters_error = None
         request_body_error = None
 
-        oas_req = _RequestAdapter(req, params)
+        oas_req = req.context['oas._request']
         try:
             parameters = self.unmarshal_parameters(
                 oas_req.parameters, operation['parameters']

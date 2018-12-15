@@ -8,18 +8,17 @@ import falcon
 import pytest
 from falcon import testing
 
-from falcon_oas.factories import create_spec_from_dict
-from falcon_oas.middlewares.security import _get_api_key
+from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.middlewares.security import get_security_schemes
 from falcon_oas.middlewares.security import SecurityMiddleware
+from falcon_oas.oas.spec import create_spec_from_dict
 from tests.helpers import yaml_load_dedent
 
-USER = object()
-RESOURCE = object()
+user = object()
 
 
 def session_user_loader(value):
-    return {'user': USER, 'none': None, '1': True, '0': False}[value]
+    return {'user': user, 'none': None, '1': True, '0': False}[value]
 
 
 security_schemes = {
@@ -37,67 +36,79 @@ security_schemes = {
 }
 
 
-def test_undocumented_request():
-    req = falcon.Request(testing.create_environ())
-    req.uri_template = req.path
-    resp = falcon.Response()
+def create_app(spec_dict):
+    spec = create_spec_from_dict(spec_dict)
+    app = falcon.API(
+        middleware=[
+            OperationMiddleware(spec),
+            SecurityMiddleware(security_schemes),
+        ]
+    )
+    return app
 
-    spec = create_spec_from_dict({'paths': {}})
-    middleware = SecurityMiddleware(spec, security_schemes)
-    middleware.process_resource(req, resp, RESOURCE, {})
 
-    assert req.context == {}
+def test_undocumented_request(resource):
+    app = create_app({'paths': {}})
+    app.add_route('/undocumented', resource)
+
+    client = testing.TestClient(app)
+    client.simulate_get(path='/undocumented')
+
+    req = resource.captured_req
+    assert 'oas.user' not in req.context
 
 
-def test_without_security():
-    req = falcon.Request(testing.create_environ(path='/path'))
-    req.uri_template = req.path
-    resp = falcon.Response()
+def test_without_security(resource):
+    app = create_app({'paths': {'/path': {'get': {}}}})
+    app.add_route('/path', resource)
 
-    spec = create_spec_from_dict({'paths': {'/path': {'get': {}}}})
-    middleware = SecurityMiddleware(spec, security_schemes)
-    middleware.process_resource(req, resp, RESOURCE, {})
+    client = testing.TestClient(app)
+    client.simulate_get(path='/path')
 
-    assert req.context == {}
+    req = resource.captured_req
+    assert 'oas.user' not in req.context
 
 
 @pytest.mark.parametrize(
-    'headers,security,context',
+    'headers,security',
     [
+        ({'Cookie': str('session=user')}, [{'session': []}]),
         (
-            {'Cookie': str('session=user')},
-            [{'session': []}],
-            {'oas.user': USER},
-        ),
-        ({'Cookie': str('session=1')}, [{'session': []}], {}),
-        (
-            {'Cookie': str('session=user'), 'X-API-Key': '1'},
+            {'Cookie': str('session=user'), 'X-API-Key': str('1')},
             [{'session': [], 'api_key': []}],
-            {'oas.user': USER},
         ),
         (
-            {'Cookie': str('session=user'), 'X-API-Key': '0'},
+            {'Cookie': str('session=user'), 'X-API-Key': str('0')},
             [{'session': []}, {'api_key': []}],
-            {'oas.user': USER},
         ),
         (
-            {'Cookie': str('session=0'), 'X-API-Key': 'user'},
+            {'Cookie': str('session=0'), 'X-API-Key': str('user')},
             [{'session': []}, {'api_key': []}],
-            {'oas.user': USER},
         ),
     ],
 )
-def test_success(headers, security, context):
-    req = falcon.Request(testing.create_environ(path='/path', headers=headers))
-    req.uri_template = req.path
-    resp = falcon.Response()
-
+def test_success(headers, security, resource):
     spec_dict = {'paths': {'/path': {'get': {'security': security}}}}
-    spec = create_spec_from_dict(spec_dict)
-    middleware = SecurityMiddleware(spec, security_schemes)
-    middleware.process_resource(req, resp, RESOURCE, {})
+    app = create_app(spec_dict)
+    app.add_route('/path', resource)
 
-    assert req.context == context
+    client = testing.TestClient(app)
+    client.simulate_get(path='/path', headers=headers)
+
+    req = resource.captured_req
+    assert req.context['oas.user'] == user
+
+
+def test_success_without_user(resource):
+    spec_dict = {'paths': {'/path': {'get': {'security': [{'session': []}]}}}}
+    app = create_app(spec_dict)
+    app.add_route('/path', resource)
+
+    client = testing.TestClient(app)
+    client.simulate_get(path='/path', headers={'Cookie': str('session=1')})
+
+    req = resource.captured_req
+    assert 'oas.user' not in req.context
 
 
 @pytest.mark.parametrize(
@@ -107,47 +118,41 @@ def test_success(headers, security, context):
         ({'Cookie': str('session=none')}, [{'session': []}]),
         ({'Cookie': str('session=0')}, [{'session': []}]),
         (
-            {'Cookie': str('session=0'), 'X-API-Key': 'user'},
+            {'Cookie': str('session=0'), 'X-API-Key': str('user')},
             [{'session': [], 'api_key': []}],
         ),
         (
-            {'Cookie': str('session=user'), 'X-API-Key': '0'},
+            {'Cookie': str('session=user'), 'X-API-Key': str('0')},
             [{'session': [], 'api_key': []}],
         ),
     ],
 )
-def test_forbidden(headers, security):
-    req = falcon.Request(testing.create_environ(path='/path', headers=headers))
-    req.uri_template = req.path
-    resp = falcon.Response()
-
+def test_forbidden(headers, security, resource):
     spec_dict = {'paths': {'/path': {'get': {'security': security}}}}
-    spec = create_spec_from_dict(spec_dict)
-    middleware = SecurityMiddleware(spec, security_schemes)
+    app = create_app(spec_dict)
+    app.add_route('/path', resource)
 
-    with pytest.raises(falcon.HTTPForbidden):
-        middleware.process_resource(req, resp, RESOURCE, {})
+    client = testing.TestClient(app)
+    response = client.simulate_get(path='/path', headers=headers)
+
+    assert response.status == falcon.HTTP_FORBIDDEN
+    assert resource.called is False
 
 
 @pytest.mark.parametrize('key', ['http', 'oauth2', 'openIdConnect'])
-def test_unsupported_type(key):
-    req = falcon.Request(testing.create_environ(path='/path'))
-    req.uri_template = req.path
-    resp = falcon.Response()
-
+def test_unsupported_type(key, resource):
     spec_dict = {'paths': {'/path': {'get': {'security': [{key: []}]}}}}
-    spec = create_spec_from_dict(spec_dict)
-    middleware = SecurityMiddleware(spec, security_schemes)
-    middleware.process_resource(req, resp, RESOURCE, {})
+    app = create_app(spec_dict)
+    app.add_route('/path', resource)
 
-    assert req.context == {}
+    client = testing.TestClient(app)
+    client.simulate_get(path='/path')
+
+    req = resource.captured_req
+    assert 'oas.user' not in req.context
 
 
-def test_without_user_loader():
-    req = falcon.Request(testing.create_environ(path='/path'))
-    req.uri_template = req.path
-    resp = falcon.Response()
-
+def test_without_user_loader(resource):
     spec_dict = {
         'paths': {
             '/path': {
@@ -155,47 +160,14 @@ def test_without_user_loader():
             }
         }
     }
-    empty_security_schemes = {}
-    spec = create_spec_from_dict(spec_dict)
-    middleware = SecurityMiddleware(spec, empty_security_schemes)
-    middleware.process_resource(req, resp, RESOURCE, {})
+    app = create_app(spec_dict)
+    app.add_route('/path', resource)
 
-    assert req.context == {}
+    client = testing.TestClient(app)
+    client.simulate_get(path='/path')
 
-
-def test_get_api_key_cookie():
-    req = falcon.Request(
-        testing.create_environ(headers={'Cookie': str('session=value')})
-    )
-    assert _get_api_key(req, 'cookie', 'session') == 'value'
-
-
-def test_get_api_key_header():
-    req = falcon.Request(
-        testing.create_environ(headers={'X-API-Key': 'value'})
-    )
-    assert _get_api_key(req, 'header', 'X-API-Key') == 'value'
-
-
-def test_get_api_key_query():
-    req = falcon.Request(
-        testing.create_environ(query_string='X-API-Key=value')
-    )
-    assert _get_api_key(req, 'query', 'X-API-Key') == 'value'
-
-
-@pytest.mark.parametrize(
-    'location,error',
-    [
-        ('cookie', KeyError),
-        ('header', falcon.HTTPMissingHeader),
-        ('query', KeyError),
-    ],
-)
-def test_get_api_key_missing(location, error):
-    req = falcon.Request(testing.create_environ())
-    with pytest.raises(error):
-        _get_api_key(req, location, 'X-API-Key')
+    req = resource.captured_req
+    assert 'oas.user' not in req.context
 
 
 def test_get_security_schemes():
