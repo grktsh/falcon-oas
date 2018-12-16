@@ -4,15 +4,43 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from distutils.util import strtobool
+
+import falcon
+import pytest
 from falcon import testing
 
 from falcon_oas.factories import create_api
 from tests.helpers import yaml_load_dedent
 
 
+spec_dict = yaml_load_dedent(
+    """\
+    paths:
+      /path:
+        x-falcon-resource: test_factories:Resource
+        post:
+          security:
+          - api_key: []
+        get:
+          security: []
+    components:
+      securitySchemes:
+        api_key:
+          type: apiKey
+          name: X-API-Key
+          in: header
+          x-user-loader: test_factories:api_key_loader
+    """
+)
+
+
 class Resource(object):
+    def on_post(self, req, resp):
+        resp.media = {'x': 'post'}
+
     def on_get(self, req, resp):
-        resp.media = {'x': 2}
+        resp.media = {'x': 'get'}
 
 
 class ElapsedMiddleware(object):
@@ -21,50 +49,35 @@ class ElapsedMiddleware(object):
 
 
 def api_key_loader(value):
-    return bool(value)
+    return strtobool(value)
 
 
-def test_create_api():
+@pytest.mark.parametrize(
+    'method,headers,status',
+    [
+        ('POST', None, falcon.HTTP_FORBIDDEN),
+        ('POST', {'X-API-Key': str('0')}, falcon.HTTP_FORBIDDEN),
+        ('POST', {'X-API-Key': str('1')}, falcon.HTTP_OK),
+        ('GET', None, falcon.HTTP_OK),
+        ('GET', {'X-API-Key': str('0')}, falcon.HTTP_OK),
+        ('GET', {'X-API-Key': str('1')}, falcon.HTTP_OK),
+    ],
+)
+def test_create_api_default(method, headers, status):
+    api = create_api(spec_dict, base_module='tests')
+    client = testing.TestClient(api)
+    response = client.simulate_request(
+        str(method), path='/path', headers=headers
+    )
+    assert response.status == status
+
+
+def test_create_api_with_middlewares():
     api = create_api(
-        yaml_load_dedent(
-            """\
-            paths:
-              /path:
-                x-falcon-resource: test_factories:Resource
-                get:
-                  security: []
-            components:
-              securitySchemes:
-                api_key:
-                  type: apiKey
-                  name: X-API-Key
-                  in: header
-                  x-user-loader: test_factories:api_key_loader
-            """
-        ),
-        middlewares=[ElapsedMiddleware()],
-        base_module='tests',
+        spec_dict, middlewares=[ElapsedMiddleware()], base_module='tests'
     )
     client = testing.TestClient(api)
-    result = client.simulate_get('/path')
-    assert result.json == {'x': 2}
-    assert result.headers['X-Elapsed'] == '100'
+    response = client.simulate_post(path='/path')
 
-
-def test_create_api_simple():
-    api = create_api(
-        yaml_load_dedent(
-            """\
-            paths:
-              /path:
-                x-falcon-resource: test_factories:Resource
-                get:
-                  security: []
-            """
-        ),
-        base_module='tests',
-    )
-    client = testing.TestClient(api)
-    result = client.simulate_get('/path')
-    assert result.json == {'x': 2}
-    assert 'X-Elapsed' not in result.headers
+    assert response.status == falcon.HTTP_FORBIDDEN
+    assert response.headers['X-Elapsed'] == '100'
