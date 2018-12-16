@@ -87,6 +87,35 @@ def test_spec_get_operation_parameters():
     assert 'requestBody' not in operation
 
 
+def test_spec_get_operation_parameters_deref():
+    spec = create_spec_from_dict(
+        yaml_load_dedent(
+            """\
+            paths:
+              /path:
+                get:
+                  parameters:
+                  - $ref: '#components/parameters/test_param'
+            components:
+              parameters:
+                test_param:
+                  name: param1
+                  in: query
+                  schema:
+                    $ref: '#components/schemas/test_schema'
+              schemas:
+                test_schema:
+                  type: string
+            """
+        )
+    )
+
+    operation = spec.get_operation('/path', 'get', None)
+    assert operation['parameters'] == [
+        {'name': 'param1', 'in': 'query', 'schema': {'type': 'string'}}
+    ]
+
+
 def test_spec_get_operation_request_body():
     spec = create_spec_from_dict(
         yaml_load_dedent(

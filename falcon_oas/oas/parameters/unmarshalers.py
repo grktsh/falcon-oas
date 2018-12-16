@@ -25,7 +25,7 @@ class ParametersUnmarshaler(object):
         for parameter_spec_dict in parameters:
             name = parameter_spec_dict['name']
             location = parameter_spec_dict['in']
-            schema = self._get_schema(parameter_spec_dict)
+            schema = parameter_spec_dict.get('schema', {})
 
             try:
                 value = self._get_value(values, location, name, schema)
@@ -50,16 +50,9 @@ class ParametersUnmarshaler(object):
         value = self.unmarshaler.unmarshal(value, schema)
         return value
 
-    def _get_schema(self, parameter_spec_dict):
-        try:
-            schema = parameter_spec_dict['schema']
-        except KeyError:
-            return {}
-        else:
-            return self.spec.deref(schema)
-
     def _get_value(self, values, location, name, schema):
         try:
             return values[location][name]
         except KeyError:
+            # TODO: Support allOf, anyOf and oneOf
             return schema['default']

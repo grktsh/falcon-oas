@@ -72,6 +72,12 @@ class Spec(object):
                 if key in seen:
                     continue
                 seen.add(key)
+                try:
+                    schema = parameter_spec_dict['schema']
+                except KeyError:
+                    pass
+                else:
+                    parameter_spec_dict['schema'] = self.deref(schema)
                 yield parameter_spec_dict
 
     def _deref_request_body(self, operation, media_type):
