@@ -19,7 +19,7 @@ class SecurityMiddleware(object):
         if operation is None:
             return
 
-        if operation['security']:
+        if self.security_schemes and operation['security']:
             oas_req = req.context['oas._request']
 
             for requirement in operation['security']:
@@ -62,19 +62,15 @@ class SecurityMiddleware(object):
         return True
 
 
-def get_security_schemes(spec_dict, base_module=''):
-    try:
-        security_schemes = spec_dict['components']['securitySchemes']
-    except KeyError:
-        return None
-    else:
-        return {
-            key: (
-                security_scheme,
-                import_string(
-                    security_scheme[X_USER_LOADER], base_module=base_module
-                ),
-            )
-            for key, security_scheme in iteritems(security_schemes)
-            if X_USER_LOADER in security_scheme
-        }
+def get_security_schemes(spec, base_module=''):
+    security_schemes = spec.get_security_schemes()
+    return security_schemes and {
+        key: (
+            security_scheme,
+            import_string(
+                security_scheme[X_USER_LOADER], base_module=base_module
+            ),
+        )
+        for key, security_scheme in iteritems(security_schemes)
+        if X_USER_LOADER in security_scheme
+    }

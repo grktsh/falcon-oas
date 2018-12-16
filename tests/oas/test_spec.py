@@ -210,6 +210,34 @@ def test_spec_get_operation_security():
     assert operation['security'] == [{'test_scheme': ['test_scope']}]
 
 
+def test_spec_get_security_schemes():
+    spec = create_spec_from_dict(
+        yaml_load_dedent(
+            """\
+            components:
+              securitySchemes:
+                api_key:
+                  $ref: '#components/schemas/api_key'
+              schemas:
+                api_key:
+                  type: apiKey
+                  name: X-API-Key
+                  in: header
+            """
+        )
+    )
+
+    assert spec.get_security_schemes() == {
+        'api_key': {'type': 'apiKey', 'name': 'X-API-Key', 'in': 'header'}
+    }
+
+
+def test_spec_get_security_schemes_none():
+    spec = create_spec_from_dict({})
+
+    assert spec.get_security_schemes() is None
+
+
 @pytest.mark.parametrize(
     'spec_dict,expected',
     [

@@ -182,7 +182,9 @@ def test_get_security_schemes():
               x-user-loader: middlewares.test_security:session_user_loader
         """
     )
-    result = get_security_schemes(spec_dict, base_module='tests')
+    spec = create_spec_from_dict(spec_dict)
+
+    result = get_security_schemes(spec, base_module='tests')
     assert result == {
         'session': (
             spec_dict['components']['securitySchemes']['session'],
@@ -192,4 +194,22 @@ def test_get_security_schemes():
 
 
 def test_get_security_schemes_none():
-    assert get_security_schemes({}) is None
+    spec = create_spec_from_dict({})
+
+    assert get_security_schemes(spec) is None
+
+
+def test_get_security_schemes_without_user_loader():
+    spec_dict = yaml_load_dedent(
+        """\
+        components:
+          securitySchemes:
+            session:
+              type: apiKey
+              name: session
+              in: cookie
+        """
+    )
+    spec = create_spec_from_dict(spec_dict)
+
+    assert get_security_schemes(spec) == {}

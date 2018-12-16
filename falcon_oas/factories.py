@@ -24,14 +24,10 @@ def create_api(
 ):
     spec = create_spec_from_dict(spec_dict, base_path=base_path)
 
-    default_middlewares = [OperationMiddleware(spec)]
-    security_schemes = get_security_schemes(spec_dict, base_module=base_module)
-    if security_schemes:
-        default_middlewares.append(SecurityMiddleware(security_schemes))
-    default_middlewares.append(
-        create_request_unmarshal_middleware(spec, parsers=parsers)
+    default_middlewares = create_default_middlewares(
+        spec, parsers=parsers, base_module=base_module
     )
-    if middlewares:
+    if middlewares is not None:
         default_middlewares.extend(middlewares)
 
     api = falcon.API(middleware=default_middlewares, request_type=Request)
@@ -45,6 +41,19 @@ def create_api(
     ):
         api.add_route(uri_template, resource)
     return api
+
+
+def create_default_middlewares(spec, parsers=None, base_module=''):
+    return [
+        OperationMiddleware(spec),
+        create_security_middleware(spec, base_module=base_module),
+        create_request_unmarshal_middleware(spec, parsers=parsers),
+    ]
+
+
+def create_security_middleware(spec, base_module=''):
+    security_schemes = get_security_schemes(spec, base_module=base_module)
+    return SecurityMiddleware(security_schemes)
 
 
 def create_request_unmarshal_middleware(spec, parsers=None):

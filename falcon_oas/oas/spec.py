@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from jsonschema import RefResolver
+from six import iteritems
 
 try:
     from functools import lru_cache
@@ -60,6 +61,17 @@ class Spec(object):
             result, base_security=self._base_security
         )
         return result
+
+    def get_security_schemes(self):
+        try:
+            security_schemes = self.spec_dict['components']['securitySchemes']
+        except KeyError:
+            return None
+        else:
+            return {
+                key: self.deref(security_scheme)
+                for key, security_scheme in iteritems(security_schemes)
+            }
 
     def _iter_parameters(self, path_item, operation):
         seen = set()
