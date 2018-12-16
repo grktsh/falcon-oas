@@ -11,16 +11,14 @@ import pytest
 from falcon_oas.oas.exceptions import ParametersError
 from falcon_oas.oas.parameters.unmarshalers import ParametersUnmarshaler
 from falcon_oas.oas.schema.unmarshalers import SchemaUnmarshaler
-from falcon_oas.oas.schema.validators import SchemaValidator
 from falcon_oas.oas.spec import create_spec_from_dict
 
 
 @pytest.fixture
 def unmarshaler():
     spec = create_spec_from_dict({})
-    validator = SchemaValidator(spec)
     unmarshaler = SchemaUnmarshaler(spec)
-    return ParametersUnmarshaler(spec, validator, unmarshaler)
+    return ParametersUnmarshaler(unmarshaler)
 
 
 def test_missing(unmarshaler):

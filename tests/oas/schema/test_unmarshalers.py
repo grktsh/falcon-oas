@@ -9,6 +9,7 @@ import datetime
 import pytest
 import pytz
 
+from falcon_oas.oas.exceptions import ValidationError
 from falcon_oas.oas.schema.unmarshalers import SchemaUnmarshaler
 from falcon_oas.oas.spec import create_spec_from_dict
 
@@ -26,6 +27,17 @@ def spec(schema):
 @pytest.fixture
 def reference():
     return {'$ref': '#/a/b'}
+
+
+def test_unmarshal_validation_error(spec, schema, reference):
+    schema['type'] = str('string')
+    instance = 123
+    message = "123 is not of type 'string'"
+
+    with pytest.raises(ValidationError) as exc_info:
+        SchemaUnmarshaler(spec).unmarshal(instance, reference)
+
+    assert exc_info.value.errors[0].message == message
 
 
 @pytest.mark.parametrize(

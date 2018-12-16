@@ -13,9 +13,7 @@ from .deserializers import deserialize_parameter
 
 
 class ParametersUnmarshaler(object):
-    def __init__(self, spec, validator, unmarshaler):
-        self.spec = spec
-        self.validator = validator
+    def __init__(self, unmarshaler):
         self.unmarshaler = unmarshaler
 
     def unmarshal(self, values, parameters):
@@ -46,7 +44,6 @@ class ParametersUnmarshaler(object):
 
     def _unmarshal(self, value, schema):
         value = deserialize_parameter(value, schema)
-        self.validator.validate(value, schema)
         value = self.unmarshaler.unmarshal(value, schema)
         return value
 

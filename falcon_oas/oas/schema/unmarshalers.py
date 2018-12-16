@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from six import iteritems
 
 from .parsers import DEFAULT_PARSERS
+from .validators import SchemaValidator
 
 
 class SchemaUnmarshaler(object):
@@ -16,12 +17,17 @@ class SchemaUnmarshaler(object):
         else:
             self.parsers = parsers
 
+        self._validator = SchemaValidator(spec, parsers=self.parsers)
         self._unmarshalers = {
             'array': self._unmarshal_array,
             'object': self._unmarshal_object,
         }
 
     def unmarshal(self, value, schema):
+        self._validator.validate(value, schema)
+        return self._unmarshal(value, schema)
+
+    def _unmarshal(self, value, schema):
         schema = self.spec.deref(schema)
 
         if 'allOf' in schema:
@@ -32,7 +38,7 @@ class SchemaUnmarshaler(object):
                 # and `unmarshaled` should be a dict.
                 #
                 # If multiple sub schemas define same property, latter wins.
-                unmarshaled = self.unmarshal(value, sub_schema)
+                unmarshaled = self._unmarshal(value, sub_schema)
                 result.update(unmarshaled)
             return result
 
@@ -47,7 +53,7 @@ class SchemaUnmarshaler(object):
         return handler(value, schema)
 
     def _unmarshal_array(self, value, schema):
-        return [self.unmarshal(x, schema['items']) for x in value]
+        return [self._unmarshal(x, schema['items']) for x in value]
 
     def _unmarshal_object(self, value, schema):
         result = {}
@@ -59,7 +65,7 @@ class SchemaUnmarshaler(object):
                     sub_value = sub_schema['default']
                 else:
                     continue  # pragma: no cover
-                result[k] = self.unmarshal(sub_value, sub_schema)
+                result[k] = self._unmarshal(sub_value, sub_schema)
         return result
 
     def _unmarshal_atom(self, value, schema):

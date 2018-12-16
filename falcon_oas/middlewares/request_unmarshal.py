@@ -6,12 +6,16 @@ from __future__ import unicode_literals
 from ..oas.exceptions import ParametersError
 from ..oas.exceptions import RequestBodyError
 from ..oas.exceptions import UnmarshalError
+from ..oas.parameters.unmarshalers import ParametersUnmarshaler
+from ..oas.request_body import RequestBodyUnmarshaler
 
 
 class RequestUnmarshalMiddleware(object):
-    def __init__(self, parameters, request_body):
-        self.unmarshal_parameters = parameters.unmarshal
-        self.unmarshal_request_body = request_body.unmarshal
+    def __init__(self, schema_unmarshaler):
+        self.parameters_unmarshaler = ParametersUnmarshaler(schema_unmarshaler)
+        self.request_body_unmarshaler = RequestBodyUnmarshaler(
+            schema_unmarshaler
+        )
 
     def process_resource(self, req, resp, resource, params):
         operation = req.context['oas._operation']
@@ -23,7 +27,7 @@ class RequestUnmarshalMiddleware(object):
 
         oas_req = req.context['oas._request']
         try:
-            parameters = self.unmarshal_parameters(
+            parameters = self.parameters_unmarshaler.unmarshal(
                 oas_req.parameters, operation['parameters']
             )
         except ParametersError as e:
@@ -35,7 +39,7 @@ class RequestUnmarshalMiddleware(object):
 
         if 'requestBody' in operation:
             try:
-                request_body = self.unmarshal_request_body(
+                request_body = self.request_body_unmarshaler.unmarshal(
                     oas_req.get_media,
                     oas_req.media_type,
                     operation['requestBody'],

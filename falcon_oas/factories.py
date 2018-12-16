@@ -10,10 +10,7 @@ from .middlewares.request_unmarshal import RequestUnmarshalMiddleware
 from .middlewares.security import get_security_schemes
 from .middlewares.security import SecurityMiddleware
 from .oas.exceptions import UnmarshalError
-from .oas.parameters.unmarshalers import ParametersUnmarshaler
-from .oas.request_body import RequestBodyUnmarshaler
 from .oas.schema.unmarshalers import SchemaUnmarshaler
-from .oas.schema.validators import SchemaValidator
 from .oas.spec import create_spec_from_dict
 from .problems import http_error_handler
 from .problems import serialize_problem
@@ -51,14 +48,5 @@ def create_api(
 
 
 def create_request_unmarshal_middleware(spec, parsers=None):
-    schema_validator = SchemaValidator(spec, parsers=parsers)
     schema_unmarshaler = SchemaUnmarshaler(spec, parsers=parsers)
-    parameters_unmarshaler = ParametersUnmarshaler(
-        spec, schema_validator, schema_unmarshaler
-    )
-    request_body_unmarshaler = RequestBodyUnmarshaler(
-        spec, schema_validator, schema_unmarshaler
-    )
-    return RequestUnmarshalMiddleware(
-        parameters_unmarshaler, request_body_unmarshaler
-    )
+    return RequestUnmarshalMiddleware(schema_unmarshaler)

@@ -9,9 +9,7 @@ from .exceptions import ValidationError
 
 
 class RequestBodyUnmarshaler(object):
-    def __init__(self, spec, validator, unmarshaler):
-        self.spec = spec
-        self.validator = validator
+    def __init__(self, unmarshaler):
         self.unmarshaler = unmarshaler
 
     def unmarshal(self, get_value, media_type, request_body_spec_dict):
@@ -38,6 +36,5 @@ class RequestBodyUnmarshaler(object):
             # Undocumented schema
             return value
 
-        self.validator.validate(value, schema)
         value = self.unmarshaler.unmarshal(value, schema)
         return value
