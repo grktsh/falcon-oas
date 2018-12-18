@@ -3,9 +3,21 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from falcon import CaseInsensitiveDict
+import falcon
 
 from ..oas.exceptions import UndocumentedRequest
+from ..utils import cached_property
+
+
+class _Indexer(object):
+    def __init__(self, getter):
+        self.getter = getter
+
+    def __getitem__(self, key):
+        try:
+            return self.getter(key, required=True)
+        except falcon.HTTPBadRequest:
+            raise KeyError(key)
 
 
 class _RequestAdapter(object):
@@ -21,11 +33,11 @@ class _RequestAdapter(object):
     def method(self):
         return self.req.method.lower()
 
-    @property
+    @cached_property
     def parameters(self):
         return {
-            'query': self.req.params,
-            'header': CaseInsensitiveDict(self.req.headers),
+            'query': _Indexer(self.req.get_param),
+            'header': _Indexer(self.req.get_header),
             'path': self.params,
             'cookie': self.req.cookies,
         }

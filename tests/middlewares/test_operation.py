@@ -70,7 +70,7 @@ def test_documented_request(resource):
 
     req = resource.captured_req
     assert req.context['oas._operation'] is not None
-    assert req.context['oas._request'].parameters['query'] == {'q': '3'}
+    assert req.context['oas._request'].parameters['query']['q'] == '3'
     assert req.context['oas._request'].parameters['header']['X-Key'] == 'key'
     assert req.context['oas._request'].parameters['path'] == {'id': '2'}
     assert req.context['oas._request'].parameters['cookie'] == {'x': '5'}
