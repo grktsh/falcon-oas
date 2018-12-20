@@ -137,7 +137,7 @@ def test_unmarshal_all_of(spec, schema, reference):
     assert unmarshaled == {'id': 2, 'date': datetime.date(2018, 1, 2)}
 
 
-@pytest.mark.parametrize('schema_type', [('oneOf',), ('anyOf',)])
+@pytest.mark.parametrize('schema_type', ['oneOf', 'anyOf'])
 def test_unmarshal_one_of_or_any_of(spec, schema, reference, schema_type):
     schema[schema_type] = [
         {'type': 'string', 'format': 'date'},
