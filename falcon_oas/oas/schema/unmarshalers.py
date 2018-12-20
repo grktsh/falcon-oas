@@ -3,10 +3,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import logging
+
 from six import iteritems
 
+from ..utils import pretty_json
 from .parsers import DEFAULT_PARSERS
 from .validators import SchemaValidator
+
+logger = logging.getLogger(__name__)
 
 
 class SchemaUnmarshaler(object):
@@ -43,7 +48,7 @@ class SchemaUnmarshaler(object):
             return result
 
         if 'type' not in schema:
-            # oneOf and anyOf are unsupported
+            logger.warning('Unsupported schema: %s', pretty_json(schema))
             return value
 
         try:

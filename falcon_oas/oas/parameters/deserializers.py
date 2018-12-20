@@ -3,20 +3,30 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import logging
 from distutils.util import strtobool
+
+logger = logging.getLogger(__name__)
 
 parameter_deserializers = {
     'integer': int,
     'number': float,
     'boolean': strtobool,
+    'string': lambda x: x,
 }
 
 
 def deserialize_parameter(value, schema):
     try:
-        deserialize = parameter_deserializers[schema['type']]
+        schema_type = schema['type']
     except KeyError:
-        # array and object is unsupported yet
+        logger.warning('Missing parameter schema type')
+        return value
+
+    try:
+        deserialize = parameter_deserializers[schema_type]
+    except KeyError:
+        logger.warning('Unsupported parameter schema type: %r', schema_type)
         return value
 
     try:

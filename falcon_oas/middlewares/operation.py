@@ -3,10 +3,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import logging
+
 import falcon
 
 from ..oas.exceptions import UndocumentedRequest
 from ..utils import cached_property
+
+logger = logging.getLogger(__name__)
 
 
 class _Indexer(object):
@@ -63,6 +67,12 @@ class OperationMiddleware(object):
                 oas_req.uri_template, oas_req.method, oas_req.media_type
             )
         except UndocumentedRequest:
+            logger.warning(
+                'Undocumented request: %s %s (%s)',
+                req.method,
+                req.path,
+                req.content_type,
+            )
             operation = None
 
         req.context['oas._operation'] = operation

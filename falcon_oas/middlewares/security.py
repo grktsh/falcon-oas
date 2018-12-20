@@ -3,11 +3,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import logging
+
 import falcon
 from six import iteritems
 
 from ..extensions import X_USER_LOADER
 from ..utils import import_string
+
+logger = logging.getLogger(__name__)
 
 
 class SecurityMiddleware(object):
@@ -31,6 +35,10 @@ class SecurityMiddleware(object):
                         req.context['oas.user'] = user
                     return
 
+            logger.warning(
+                'No security requirement was satisfied: %r',
+                operation['security'],
+            )
             # TODO: distinguish unauthorized error from forbidden error
             raise falcon.HTTPForbidden()
 
@@ -56,9 +64,13 @@ class SecurityMiddleware(object):
             try:
                 value = parameters[location][name]
             except KeyError:
+                logger.info('Missing apiKey %r in %r', name, location)
                 return False
             return user_loader(value)
-        # Unsupported yet
+
+        logger.warning(
+            'Unsupported security scheme type: %r', security_scheme['type']
+        )
         return True
 
 
