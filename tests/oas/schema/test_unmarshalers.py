@@ -24,18 +24,13 @@ def spec(schema):
     return create_spec_from_dict({'a': {'b': schema}})
 
 
-@pytest.fixture
-def reference():
-    return {'$ref': '#/a/b'}
-
-
-def test_unmarshal_validation_error(spec, schema, reference):
+def test_unmarshal_validation_error(spec, schema):
     schema['type'] = str('string')
     instance = 123
     message = "123 is not of type 'string'"
 
     with pytest.raises(ValidationError) as exc_info:
-        SchemaUnmarshaler(spec).unmarshal(instance, reference)
+        SchemaUnmarshaler(spec).unmarshal(instance, schema)
 
     assert exc_info.value.errors[0].message == message
 
@@ -52,41 +47,41 @@ def test_unmarshal_validation_error(spec, schema, reference):
         ('string', 'foo'),
     ],
 )
-def test_unmarshal_atom(spec, schema, reference, schema_type, instance):
+def test_unmarshal_atom(spec, schema, schema_type, instance):
     schema['type'] = schema_type
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == instance
 
 
-def test_unmarshal_atom_format_date(spec, schema, reference):
+def test_unmarshal_atom_format_date(spec, schema):
     schema.update({'type': 'string', 'format': 'date'})
     instance = '2018-01-02'
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == datetime.date(2018, 1, 2)
 
 
-def test_unmarshal_atom_format_date_time(spec, schema, reference):
+def test_unmarshal_atom_format_date_time(spec, schema):
     schema.update({'type': 'string', 'format': 'date-time'})
     instance = '2018-01-02T03:04:05Z'
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == datetime.datetime(
         2018, 1, 2, 3, 4, 5, tzinfo=pytz.utc
     )
 
 
-def test_unmarshal_atom_format_uri(spec, schema, reference):
+def test_unmarshal_atom_format_uri(spec, schema):
     schema.update({'type': 'string', 'format': 'uri'})
     instance = 'http://example.com/path'
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == instance
 
 
-def test_unmarshal_array(spec, schema, reference):
+def test_unmarshal_array(spec, schema):
     schema.update(
         {'type': 'array', 'items': {'type': 'string', 'format': 'date'}}
     )
     instance = ['2018-01-02', '2018-02-03', '2018-03-04']
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == [
         datetime.date(2018, 1, 2),
         datetime.date(2018, 2, 3),
@@ -94,7 +89,7 @@ def test_unmarshal_array(spec, schema, reference):
     ]
 
 
-def test_unmarshal_object(spec, schema, reference):
+def test_unmarshal_object(spec, schema):
     schema.update(
         {
             'type': 'object',
@@ -110,21 +105,21 @@ def test_unmarshal_object(spec, schema, reference):
         }
     )
     instance = {'date': '2018-01-02'}
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == {
         'date': datetime.date(2018, 1, 2),
         'date-default': datetime.date(2020, 1, 1),
     }
 
 
-def test_unmarshal_object_without_properties(spec, schema, reference):
+def test_unmarshal_object_without_properties(spec, schema):
     schema['type'] = 'object'
     instance = {'date': '2018-01-02'}
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == {}
 
 
-def test_unmarshal_all_of(spec, schema, reference):
+def test_unmarshal_all_of(spec, schema):
     schema['allOf'] = [
         {'type': 'object', 'properties': {'id': {'type': 'integer'}}},
         {
@@ -133,25 +128,25 @@ def test_unmarshal_all_of(spec, schema, reference):
         },
     ]
     instance = {'id': 2, 'date': '2018-01-02'}
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == {'id': 2, 'date': datetime.date(2018, 1, 2)}
 
 
 @pytest.mark.parametrize('schema_type', ['oneOf', 'anyOf'])
-def test_unmarshal_one_of_or_any_of(spec, schema, reference, schema_type):
+def test_unmarshal_one_of_or_any_of(spec, schema, schema_type):
     schema[schema_type] = [
         {'type': 'string', 'format': 'date'},
         {'type': 'integer'},
     ]
     instance = '2018-01-02'
-    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, reference)
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == instance
 
 
-def test_unmarshal_without_parsers(spec, schema, reference):
+def test_unmarshal_without_parsers(spec, schema):
     schema.update({'type': 'string', 'format': 'date'})
     instance = '2018-01-02'
     unmarshaled = SchemaUnmarshaler(spec, parsers={}).unmarshal(
-        instance, reference
+        instance, schema
     )
     assert unmarshaled == instance
