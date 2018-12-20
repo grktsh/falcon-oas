@@ -36,7 +36,7 @@ class _RequestAdapter(object):
     @cached_property
     def parameters(self):
         return {
-            'query': _Indexer(self.req.get_param),
+            'query': self.req.params,
             'header': _Indexer(self.req.get_header),
             'path': self.params,
             'cookie': self.req.cookies,

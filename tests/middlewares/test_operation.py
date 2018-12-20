@@ -59,7 +59,7 @@ def test_documented_request(resource):
     client = testing.TestClient(app)
     client.simulate_post(
         path='/path/2',
-        query_string=str('q=3'),
+        query_string=str('q=3&r=5&r=7'),
         headers={
             'Content-Type': str('application/json; charset=UTF-8'),
             'Cookie': str('x=5'),
@@ -70,7 +70,10 @@ def test_documented_request(resource):
 
     req = resource.captured_req
     assert req.context['oas._operation'] is not None
-    assert req.context['oas._request'].parameters['query']['q'] == '3'
+    assert req.context['oas._request'].parameters['query'] == {
+        'q': '3',
+        'r': ['5', '7'],
+    }
     assert req.context['oas._request'].parameters['header']['X-Key'] == 'key'
     assert req.context['oas._request'].parameters['path'] == {'id': '2'}
     assert req.context['oas._request'].parameters['cookie'] == {'x': '5'}
