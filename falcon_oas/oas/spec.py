@@ -24,15 +24,15 @@ def create_spec_from_dict(spec_dict, base_path=None):
 class Spec(object):
     def __init__(self, spec_dict, base_path=None):
         self.spec_dict = spec_dict
-        self.resolver = RefResolver.from_schema(spec_dict)
         self.base_path = (
             base_path if base_path is not None else get_base_path(spec_dict)
         )
         self._base_security = get_security(spec_dict)
 
     def deref(self, schema):
+        resolver = self._create_resolver()
         while '$ref' in schema:
-            _, schema = self.resolver.resolve(schema['$ref'])
+            _, schema = resolver.resolve(schema['$ref'])
         return schema
 
     @lru_cache(maxsize=None)
@@ -106,6 +106,9 @@ class Spec(object):
         else:
             media_type_spec_dict['schema'] = self.deref(schema)
         return result
+
+    def _create_resolver(self):
+        return RefResolver.from_schema(self.spec_dict)
 
 
 def get_base_path(spec_dict):

@@ -14,17 +14,19 @@ from .parsers import DEFAULT_PARSERS
 
 class SchemaValidator(object):
     def __init__(self, spec, parsers=None):
-        format_checker = _create_format_checker_from_parsers(parsers)
-        self.validator = Draft4Validator(
-            spec.spec_dict,
-            resolver=spec.resolver,
-            format_checker=format_checker,
-        )
+        self.spec_dict = spec.spec_dict
+        self.format_checker = _create_format_checker_from_parsers(parsers)
 
     def validate(self, instance, schema):
-        errors = list(self.validator.iter_errors(instance, _schema=schema))
+        validator = self._create_validator()
+        errors = list(validator.iter_errors(instance, _schema=schema))
         if errors:
             raise ValidationError(errors)
+
+    def _create_validator(self):
+        return Draft4Validator(
+            self.spec_dict, format_checker=self.format_checker
+        )
 
 
 def _create_format_checker_from_parsers(parsers=None):
