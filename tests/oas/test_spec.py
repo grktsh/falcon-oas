@@ -35,7 +35,7 @@ def test_spec_deref_without_ref():
     schema = {'type': 'object'}
 
     resolved = spec.deref(schema)
-    assert resolved is schema
+    assert resolved == schema
 
 
 def test_spec_deref_nested():

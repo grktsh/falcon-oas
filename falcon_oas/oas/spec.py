@@ -33,7 +33,7 @@ class Spec(object):
         resolver = self._create_resolver()
         while '$ref' in schema:
             _, schema = resolver.resolve(schema['$ref'])
-        return schema
+        return schema.copy()
 
     @lru_cache(maxsize=None)
     def get_operation(self, uri_template, method, media_type):
@@ -49,11 +49,11 @@ class Spec(object):
 
         result = operation.copy()
         result['parameters'] = list(
-            self._iter_parameters(path_item, operation)
+            self._iter_parameters(path_item.copy(), result)
         )
         try:
             result['requestBody'] = self._deref_request_body(
-                operation, media_type
+                result, media_type
             )
         except KeyError:
             pass
