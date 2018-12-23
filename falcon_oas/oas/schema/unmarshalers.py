@@ -33,6 +33,8 @@ class SchemaUnmarshaler(object):
         return self._unmarshal(value, schema)
 
     def _unmarshal(self, value, schema):
+        schema = self.spec.deref(schema)
+
         if 'allOf' in schema:
             # `value` should be a dict
             result = value.copy()  # shallow copy

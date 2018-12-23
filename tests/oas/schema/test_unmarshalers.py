@@ -21,7 +21,13 @@ def schema():
 
 @pytest.fixture
 def spec(schema):
-    return create_spec_from_dict({'a': {'b': schema}})
+    return create_spec_from_dict(
+        {
+            'components': {
+                'schemas': {'Date': {'type': 'string', 'format': 'date'}}
+            }
+        }
+    )
 
 
 def test_unmarshal_validation_error(spec, schema):
@@ -78,7 +84,7 @@ def test_unmarshal_atom_format_uri(spec, schema):
 
 def test_unmarshal_array(spec, schema):
     schema.update(
-        {'type': 'array', 'items': {'type': 'string', 'format': 'date'}}
+        {'type': 'array', 'items': {'$ref': '#/components/schemas/Date'}}
     )
     instance = ['2018-01-02', '2018-02-03', '2018-03-04']
     unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
@@ -95,7 +101,7 @@ def test_unmarshal_object(spec, schema):
             'type': 'object',
             'properties': {
                 'id': {'type': 'integer'},
-                'date': {'type': 'string', 'format': 'date'},
+                'date': {'$ref': '#/components/schemas/Date'},
                 'date-default': {
                     'type': 'string',
                     'format': 'date',
@@ -124,7 +130,7 @@ def test_unmarshal_all_of(spec, schema):
         {'type': 'object', 'properties': {'id': {'type': 'integer'}}},
         {
             'type': 'object',
-            'properties': {'date': {'type': 'string', 'format': 'date'}},
+            'properties': {'date': {'$ref': '#/components/schemas/Date'}},
         },
     ]
     instance = {'id': 2, 'date': '2018-01-02'}
