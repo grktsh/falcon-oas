@@ -7,4 +7,4 @@
 /coverage.xml
 /build/
 /dist/
-/falcon_oas/__version__.py
+/src/falcon_oas/__version__.py
