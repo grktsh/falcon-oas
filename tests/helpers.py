@@ -10,4 +10,4 @@ import yaml
 
 
 def yaml_load_dedent(text):
-    return yaml.load(textwrap.dedent(text))
+    return yaml.safe_load(textwrap.dedent(text))
