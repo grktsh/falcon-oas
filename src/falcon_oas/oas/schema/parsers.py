@@ -10,6 +10,21 @@ DEFAULT_PARSERS = {
     'date': lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').date()
 }
 
+
+def raises(error):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except error as e:
+                raise ValueError(e)
+
+        return wrapper
+
+    return decorator
+
+
 try:
     import pyrfc3339
 except ImportError:  # pragma: no cover
@@ -23,18 +38,13 @@ except ImportError:  # pragma: no cover
     rfc3986 = None
 else:
 
-    def create_uri_parser():
+    @raises(rfc3986.exceptions.RFC3986Exception)
+    def parse_uri(value):
+        uri = rfc3986.uri_reference(value)
         validator = rfc3986.validators.Validator().require_presence_of(
             'scheme', 'host'
         )
+        validator.validate(uri)
+        return value
 
-        def parse_uri(value):
-            try:
-                validator.validate(rfc3986.uri_reference(value))
-            except rfc3986.exceptions.RFC3986Exception as e:
-                raise ValueError(e)
-            return value
-
-        return parse_uri
-
-    DEFAULT_PARSERS['uri'] = create_uri_parser()
+    DEFAULT_PARSERS['uri'] = parse_uri
