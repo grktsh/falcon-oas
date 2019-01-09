@@ -3,8 +3,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from jsonschema import RefResolver
-from six import iteritems
+import copy
+
+import jsonref
 
 try:
     from functools import lru_cache
@@ -18,7 +19,8 @@ DEFAULT_SERVER = {'url': '/'}
 
 
 def create_spec_from_dict(spec_dict, base_path=None):
-    return Spec(spec_dict, base_path=base_path)
+    deref_spec_dict = jsonref.JsonRef.replace_refs(spec_dict)
+    return Spec(deref_spec_dict, base_path=base_path)
 
 
 class Spec(object):
@@ -29,12 +31,6 @@ class Spec(object):
         )
         self._base_security = get_security(spec_dict)
 
-    def deref(self, schema):
-        resolver = self._create_resolver()
-        while '$ref' in schema:
-            _, schema = resolver.resolve(schema['$ref'])
-        return schema.copy()
-
     @lru_cache(maxsize=None)
     def get_operation(self, uri_template, method, media_type):
         if not uri_template.startswith(self.base_path):
@@ -42,21 +38,21 @@ class Spec(object):
 
         path = uri_template[len(self.base_path) :]
         try:
-            path_item = self.deref(self.spec_dict['paths'][path])
+            path_item = self.spec_dict['paths'][path]
             operation = path_item[method]
         except KeyError:
             raise UndocumentedRequest()
 
-        result = operation.copy()
+        if 'requestBody' in operation:
+            # TODO: Support media type range
+            if media_type not in operation['requestBody']['content']:
+                raise UndocumentedMediaType()
+
+        # Deepcopy operation to avoid JsonRef proxy access for performance
+        result = copy.deepcopy(operation)
         result['parameters'] = list(
             self._iter_parameters(path_item.copy(), result)
         )
-        try:
-            result['requestBody'] = self._deref_request_body(
-                result, media_type
-            )
-        except KeyError:
-            pass
         result['security'] = get_security(
             result, base_security=self._base_security
         )
@@ -68,10 +64,7 @@ class Spec(object):
         except KeyError:
             return None
         else:
-            return {
-                key: self.deref(security_scheme)
-                for key, security_scheme in iteritems(security_schemes)
-            }
+            return security_schemes
 
     def _iter_parameters(self, path_item, operation):
         seen = set()
@@ -79,36 +72,11 @@ class Spec(object):
             if 'parameters' not in spec_dict:
                 continue
             for parameter_spec_dict in spec_dict['parameters']:
-                parameter_spec_dict = self.deref(parameter_spec_dict)
                 key = (parameter_spec_dict['in'], parameter_spec_dict['name'])
                 if key in seen:
                     continue
                 seen.add(key)
-                try:
-                    schema = parameter_spec_dict['schema']
-                except KeyError:
-                    pass
-                else:
-                    parameter_spec_dict['schema'] = self.deref(schema)
                 yield parameter_spec_dict
-
-    def _deref_request_body(self, operation, media_type):
-        result = self.deref(operation['requestBody'])
-        try:
-            # TODO: Support media type range
-            media_type_spec_dict = result['content'][media_type]
-        except KeyError:
-            raise UndocumentedMediaType()
-        try:
-            schema = media_type_spec_dict['schema']
-        except KeyError:
-            pass
-        else:
-            media_type_spec_dict['schema'] = self.deref(schema)
-        return result
-
-    def _create_resolver(self):
-        return RefResolver.from_schema(self.spec_dict)
 
 
 def get_base_path(spec_dict):

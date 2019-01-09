@@ -5,55 +5,43 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import pytest
-
 from falcon_oas.oas.exceptions import UndocumentedMediaType
 from falcon_oas.oas.exceptions import UndocumentedRequest
 from falcon_oas.oas.spec import create_spec_from_dict
 from falcon_oas.oas.spec import get_base_path
 from falcon_oas.oas.spec import get_security
+
 from tests.helpers import yaml_load_dedent
 
 
-def test_spec_deref():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            a:
-              b:
-                type: object
-            """
-        )
-    )
-    schema = {'$ref': '#/a/b'}
-
-    resolved = spec.deref(schema)
-    assert resolved == {'type': 'object'}
-
-
-def test_spec_deref_without_ref():
-    spec = create_spec_from_dict({})
-    schema = {'type': 'object'}
-
-    resolved = spec.deref(schema)
-    assert resolved == schema
-
-
-def test_spec_deref_nested():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            a:
-              b:
-                $ref: '#/c'
-            c:
+def test_create_spec_from_dict():
+    spec_dict = yaml_load_dedent(
+        """\
+        components:
+          schemas:
+            Foo:
               type: object
-            """
-        )
+              properties:
+                x:
+                  type: integer
+            Bar:
+              type: object
+              properties:
+                foo:
+                  $ref: '#/components/schemas/Foo'
+        """
     )
-    schema = {'$ref': '#/a/b'}
+    spec = create_spec_from_dict(spec_dict)
 
-    resolved = spec.deref(schema)
-    assert resolved == {'type': 'object'}
+    bar_dict = spec.spec_dict['components']['schemas']['Bar']
+    assert bar_dict['properties']['foo'] == yaml_load_dedent(
+        """\
+        type: object
+        properties:
+          x:
+            type: integer
+        """
+    )
 
 
 def test_spec_get_operation_parameters():

@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 class SchemaUnmarshaler(object):
     def __init__(self, spec, parsers=None):
-        self.spec = spec
         if parsers is None:
             self.parsers = DEFAULT_PARSERS
         else:
@@ -33,8 +32,6 @@ class SchemaUnmarshaler(object):
         return self._unmarshal(value, schema)
 
     def _unmarshal(self, value, schema):
-        schema = self.spec.deref(schema)
-
         if 'allOf' in schema:
             # `value` should be a dict
             result = value.copy()  # shallow copy
