@@ -7,6 +7,7 @@ import logging
 
 import falcon
 
+from ..oas.exceptions import UndocumentedMediaType
 from ..oas.exceptions import UndocumentedRequest
 from ..utils import cached_property
 
@@ -66,6 +67,14 @@ class OperationMiddleware(object):
             operation = self.spec.get_operation(
                 oas_req.uri_template, oas_req.method, oas_req.media_type
             )
+        except UndocumentedMediaType:
+            logger.warning(
+                'Undocumented media type: %s %s (%s)',
+                req.method,
+                req.path,
+                req.content_type,
+            )
+            raise falcon.HTTPBadRequest()
         except UndocumentedRequest:
             logger.warning(
                 'Undocumented request: %s %s (%s)',

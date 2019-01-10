@@ -7,11 +7,11 @@ from __future__ import unicode_literals
 import falcon
 import pytest
 from falcon import testing
-
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.middlewares.security import get_security_schemes
 from falcon_oas.middlewares.security import SecurityMiddleware
 from falcon_oas.oas.spec import create_spec_from_dict
+
 from tests.helpers import yaml_load_dedent
 
 user = object()
@@ -52,7 +52,9 @@ def test_undocumented_request(resource):
     app.add_route('/undocumented', resource)
 
     client = testing.TestClient(app)
-    client.simulate_get(path='/undocumented')
+    response = client.simulate_get(path='/undocumented')
+
+    assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
     assert 'oas.user' not in req.context

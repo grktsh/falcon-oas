@@ -6,9 +6,9 @@ from __future__ import unicode_literals
 
 import falcon
 from falcon import testing
-
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.oas.spec import create_spec_from_dict
+
 from tests.helpers import yaml_load_dedent
 
 
@@ -16,17 +16,6 @@ def create_app(spec_dict):
     spec = create_spec_from_dict(spec_dict)
     app = falcon.API(middleware=[OperationMiddleware(spec)])
     return app
-
-
-def test_undocumented_request(resource):
-    app = create_app({'paths': {}})
-    app.add_route('/undocumented', resource)
-
-    client = testing.TestClient(app)
-    client.simulate_get(path='/undocumented')
-
-    req = resource.captured_req
-    assert req.context['oas._operation'] is None
 
 
 def test_undocumented_media_type(resource):
@@ -44,9 +33,21 @@ def test_undocumented_media_type(resource):
     app.add_route('/path', resource)
 
     client = testing.TestClient(app)
-    client.simulate_get(
+    response = client.simulate_get(
         path='/path', headers={'Content-Type': str('text/plain')}
     )
+
+    assert response.status == falcon.HTTP_BAD_REQUEST
+
+
+def test_undocumented_request(resource):
+    app = create_app({'paths': {}})
+    app.add_route('/undocumented', resource)
+
+    client = testing.TestClient(app)
+    response = client.simulate_get(path='/undocumented')
+
+    assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
     assert req.context['oas._operation'] is None

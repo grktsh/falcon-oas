@@ -7,11 +7,11 @@ from __future__ import unicode_literals
 import falcon
 import pytest
 from falcon import testing
-
 from falcon_oas.factories import create_request_unmarshal_middleware
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.oas.exceptions import UnmarshalError
 from falcon_oas.oas.spec import create_spec_from_dict
+
 from tests.helpers import yaml_load_dedent
 
 
@@ -31,31 +31,9 @@ def test_undocumented_request(resource):
     app.add_route('/undocumented', resource)
 
     client = testing.TestClient(app)
-    client.simulate_get(path='/undocumented')
+    response = client.simulate_get(path='/undocumented')
 
-    req = resource.captured_req
-    assert 'oas.parameters' not in req.context
-    assert 'oas.request_body' not in req.context
-
-
-def test_undocumented_media_type(resource):
-    spec_dict = yaml_load_dedent(
-        """\
-        paths:
-          /path:
-            get:
-              requestBody:
-                content:
-                  application/json: {}
-        """
-    )
-    app = create_app(spec_dict)
-    app.add_route('/path', resource)
-
-    client = testing.TestClient(app)
-    client.simulate_get(
-        path='/path', headers={'Content-Type': str('text/plain')}
-    )
+    assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
     assert 'oas.parameters' not in req.context
