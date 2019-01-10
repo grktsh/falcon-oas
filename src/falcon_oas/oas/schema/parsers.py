@@ -6,8 +6,28 @@ from __future__ import unicode_literals
 import datetime
 import functools
 
+
+def parse_int(value, min_int, max_int):
+    n = int(value)
+    if not (min_int <= n <= max_int):
+        raise ValueError(
+            'Must be between {} and {}: {!r}'.format(min_int, max_int, value)
+        )
+    return n
+
+
+def parse_date(value):
+    return datetime.datetime.strptime(value, '%Y-%m-%d').date()
+
+
 DEFAULT_PARSERS = {
-    'date': lambda x: datetime.datetime.strptime(x, '%Y-%m-%d').date()
+    'int32': functools.partial(
+        parse_int, min_int=-2 ** 31, max_int=2 ** 31 - 1
+    ),
+    'int64': functools.partial(
+        parse_int, min_int=-2 ** 63, max_int=2 ** 63 - 1
+    ),
+    'date': parse_date,
 }
 
 

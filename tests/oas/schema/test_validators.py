@@ -38,7 +38,7 @@ def test_validate_error(spec, schema):
     assert exc_info.value.errors[0].message == message
 
 
-def test_validate_format_date(spec, schema):
+def test_validate_format(spec, schema):
     schema['format'] = 'date'
     instance = '2018-01-02'
     try:
@@ -47,62 +47,10 @@ def test_validate_format_date(spec, schema):
         pytest.fail('Unexpected error: {}'.format(e))
 
 
-def test_validate_format_date_error(spec, schema):
+def test_validate_format_error(spec, schema):
     schema['format'] = str('date')
     instance = str('2018/01/02')
     message = "'2018/01/02' is not a 'date'"
-
-    with pytest.raises(ValidationError) as exc_info:
-        SchemaValidator(spec).validate(instance, schema)
-
-    assert exc_info.value.errors[0].message == message
-
-
-def test_validate_format_date_time(spec, schema):
-    schema['format'] = 'date-time'
-    instance = '2018-01-02T03:04:05Z'
-    try:
-        SchemaValidator(spec).validate(instance, schema)
-    except ValidationError as e:
-        pytest.fail('Unexpected error: {}'.format(e))
-
-
-def test_validate_format_date_time_error(spec, schema):
-    schema['format'] = str('date-time')
-    instance = str('2018-01-02T03:04:05')
-    message = "'2018-01-02T03:04:05' is not a 'date-time'"
-
-    with pytest.raises(ValidationError) as exc_info:
-        SchemaValidator(spec).validate(instance, schema)
-
-    assert exc_info.value.errors[0].message == message
-
-
-@pytest.mark.parametrize(
-    'instance',
-    [
-        'http://example.com',
-        'http://example.com/',
-        'http://example.com/path',
-        'http://example.com/path?query#segment',
-        'https://example.com',
-    ],
-)
-def test_validate_format_uri(spec, schema, instance):
-    schema['format'] = 'uri'
-    try:
-        SchemaValidator(spec).validate(instance, schema)
-    except ValidationError as e:
-        pytest.fail('Unexpected error: {}'.format(e))
-
-
-@pytest.mark.parametrize(
-    'instance',
-    [str('http'), str('http://'), str('example.com'), str('example.com/path')],
-)
-def test_validate_format_uri_error(spec, schema, instance):
-    schema['format'] = str('uri')
-    message = "'" + instance + "' is not a 'uri'"
 
     with pytest.raises(ValidationError) as exc_info:
         SchemaValidator(spec).validate(instance, schema)
