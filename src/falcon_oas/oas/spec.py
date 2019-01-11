@@ -20,7 +20,7 @@ DEFAULT_SERVER = {'url': '/'}
 
 def create_spec_from_dict(spec_dict, base_path=None):
     deref_spec_dict = jsonref.JsonRef.replace_refs(spec_dict)
-    return Spec(deref_spec_dict, base_path=base_path)
+    return Spec(copy.deepcopy(deref_spec_dict), base_path=base_path)
 
 
 class Spec(object):
@@ -48,11 +48,8 @@ class Spec(object):
             if media_type not in operation['requestBody']['content']:
                 raise UndocumentedMediaType()
 
-        # Deepcopy operation to avoid JsonRef proxy access for performance
-        result = copy.deepcopy(operation)
-        result['parameters'] = list(
-            self._iter_parameters(path_item.copy(), result)
-        )
+        result = operation.copy()
+        result['parameters'] = list(self._iter_parameters(path_item, result))
         result['security'] = get_security(
             result, base_security=self._base_security
         )
