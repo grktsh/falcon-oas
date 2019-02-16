@@ -9,9 +9,13 @@ repos:
   hooks:
   - id: ffffff
 
+- repo: https://gitlab.com/pycqa/flake8
+  rev: 3.7.5
+  hooks:
+  - id: flake8
+
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v2.1.0
   hooks:
   - id: end-of-file-fixer
-  - id: flake8
   - id: trailing-whitespace
