@@ -7,11 +7,11 @@ from __future__ import unicode_literals
 import falcon
 import pytest
 from falcon import testing
+
 from falcon_oas.factories import create_request_unmarshal_middleware
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.oas.exceptions import UnmarshalError
 from falcon_oas.oas.spec import create_spec_from_dict
-
 from tests.helpers import yaml_load_dedent
 
 

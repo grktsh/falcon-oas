@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import pytest
+
 from falcon_oas.oas.schema.validators import SchemaValidator
 from falcon_oas.oas.schema.validators import ValidationError
 from falcon_oas.oas.spec import create_spec_from_dict

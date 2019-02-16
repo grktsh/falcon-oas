@@ -5,12 +5,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import pytest
+
 from falcon_oas.oas.exceptions import UndocumentedMediaType
 from falcon_oas.oas.exceptions import UndocumentedRequest
 from falcon_oas.oas.spec import create_spec_from_dict
 from falcon_oas.oas.spec import get_base_path
 from falcon_oas.oas.spec import get_security
-
 from tests.helpers import yaml_load_dedent
 
 

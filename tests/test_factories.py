@@ -9,8 +9,8 @@ from distutils.util import strtobool
 import falcon
 import pytest
 from falcon import testing
-from falcon_oas.factories import create_api
 
+from falcon_oas.factories import create_api
 from tests.helpers import yaml_load_dedent
 
 
