@@ -27,9 +27,7 @@ class SecurityMiddleware(object):
             oas_req = req.context['oas._request']
 
             for requirement in operation['security']:
-                user = self._satisfy_requirement(
-                    oas_req.parameters, requirement
-                )
+                user = self._satisfy_requirement(oas_req, requirement)
                 if user:
                     if user is not True:
                         req.context['oas.user'] = user
@@ -42,17 +40,17 @@ class SecurityMiddleware(object):
             # TODO: distinguish unauthorized error from forbidden error
             raise falcon.HTTPForbidden()
 
-    def _satisfy_requirement(self, parameters, requirement):
+    def _satisfy_requirement(self, oas_req, requirement):
         result = True
         for key, scopes in iteritems(requirement):
-            user = self._satisfy_scheme(parameters, key, scopes)
+            user = self._satisfy_scheme(oas_req, key, scopes)
             if not user:
                 return False
             if user is not True:
                 result = user
         return result
 
-    def _satisfy_scheme(self, parameters, key, scopes):
+    def _satisfy_scheme(self, oas_req, key, scopes):
         try:
             security_scheme, user_loader = self.security_schemes[key]
         except KeyError:
@@ -61,12 +59,8 @@ class SecurityMiddleware(object):
         if security_scheme['type'] == 'apiKey':
             location = security_scheme['in']
             name = security_scheme['name']
-            try:
-                value = parameters[location][name]
-            except KeyError:
-                logger.info('Missing apiKey %r in %r', name, location)
-                return False
-            return user_loader(value)
+            value = oas_req.parameters[location].get(name)
+            return user_loader(value, oas_req)
 
         logger.warning(
             'Unsupported security scheme type: %r', security_scheme['type']

@@ -9,8 +9,8 @@ from distutils.util import strtobool
 import falcon
 import pytest
 from falcon import testing
-
 from falcon_oas.factories import create_api
+
 from tests.helpers import yaml_load_dedent
 
 
@@ -48,8 +48,8 @@ class ElapsedMiddleware(object):
         resp.set_header('X-Elapsed', 100)
 
 
-def api_key_loader(value):
-    return strtobool(value)
+def api_key_loader(value, req):
+    return value and strtobool(value)
 
 
 @pytest.mark.parametrize(

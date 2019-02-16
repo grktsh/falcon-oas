@@ -9,6 +9,7 @@ import falcon
 
 from ..oas.exceptions import UndocumentedMediaType
 from ..oas.exceptions import UndocumentedRequest
+from ..oas.request import Request
 from ..utils import cached_property
 
 logger = logging.getLogger(__name__)
@@ -24,8 +25,11 @@ class _Indexer(object):
         except falcon.HTTPBadRequest:
             raise KeyError(key)
 
+    def get(self, key, default=None):
+        return self.getter(key, default=default)
 
-class _RequestAdapter(object):
+
+class _RequestAdapter(Request):
     def __init__(self, req, params):
         self.req = req
         self.params = params

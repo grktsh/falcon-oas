@@ -5,7 +5,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import falcon
+import pytest
 from falcon import testing
+from falcon_oas.middlewares.operation import _RequestAdapter
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.oas.spec import create_spec_from_dict
 
@@ -16,6 +18,36 @@ def create_app(spec_dict):
     spec = create_spec_from_dict(spec_dict)
     app = falcon.API(middleware=[OperationMiddleware(spec)])
     return app
+
+
+@pytest.fixture
+def req():
+    env = testing.create_environ(
+        query_string='page=1',
+        headers={
+            'X-API-Key': 'secret-key',
+            'Cookie': str('session=secret'),
+            'Content-Type': 'application/json',
+        },
+        body='{"foo": "bar"}',
+        method='GET',
+    )
+    req = falcon.Request(env)
+    req.uri_template = '/users/{id}'
+    return _RequestAdapter(req, {'id': '42'})
+
+
+def test_request_adapter(req):
+    assert req.uri_template == '/users/{id}'
+    assert req.method == 'get'
+    assert req.parameters['query'] == {'page': '1'}
+    assert req.parameters['header']['x-api-key'] == 'secret-key'
+    assert req.parameters['path'] == {'id': '42'}
+    assert req.parameters['cookie'] == {'session': 'secret'}
+    assert req.media_type == 'application/json'
+    assert req.get_media() == {'foo': 'bar'}
+
+    pytest.raises(KeyError, lambda: req.parameters['header']['unknown'])
 
 
 def test_undocumented_media_type(resource):

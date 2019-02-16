@@ -17,7 +17,9 @@ from tests.helpers import yaml_load_dedent
 user = object()
 
 
-def session_user_loader(value):
+def session_user_loader(value, req):
+    if value is None:
+        return None
     return {'user': user, 'none': None, '1': True, '0': False}[value]
 
 
@@ -95,7 +97,9 @@ def test_success(headers, security, resource):
     app.add_route('/path', resource)
 
     client = testing.TestClient(app)
-    client.simulate_get(path='/path', headers=headers)
+    response = client.simulate_get(path='/path', headers=headers)
+
+    assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
     assert req.context['oas.user'] == user
@@ -107,7 +111,11 @@ def test_success_without_user(resource):
     app.add_route('/path', resource)
 
     client = testing.TestClient(app)
-    client.simulate_get(path='/path', headers={'Cookie': str('session=1')})
+    response = client.simulate_get(
+        path='/path', headers={'Cookie': str('session=1')}
+    )
+
+    assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
     assert 'oas.user' not in req.context
