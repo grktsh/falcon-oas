@@ -3,6 +3,8 @@ repos:
   rev: v1.3.5
   hooks:
   - id: reorder-python-imports
+    args:
+    - --application-directories=.:src
 
 - repo: https://github.com/grktsh/ffffff
   rev: v2018.11.15
