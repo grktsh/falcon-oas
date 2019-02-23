@@ -5,11 +5,26 @@ from __future__ import unicode_literals
 
 from jsonschema import Draft4Validator
 from jsonschema import FormatChecker
+from jsonschema import validators
 from six import iteritems
 from six import string_types
 
 from ..exceptions import ValidationError
 from .parsers import DEFAULT_PARSERS
+
+
+_type_draft4_validator = Draft4Validator.VALIDATORS['type']
+
+
+def _type_validator(validator, types, instance, schema):
+    if instance is None and schema.get('nullable'):
+        return
+
+    for error in _type_draft4_validator(validator, types, instance, schema):
+        yield error
+
+
+_Validator = validators.extend(Draft4Validator, {'type': _type_validator})
 
 
 class SchemaValidator(object):
@@ -24,9 +39,7 @@ class SchemaValidator(object):
             raise ValidationError(errors)
 
     def _create_validator(self):
-        return Draft4Validator(
-            self.spec_dict, format_checker=self.format_checker
-        )
+        return _Validator(self.spec_dict, format_checker=self.format_checker)
 
 
 def _create_format_checker_from_parsers(parsers=None):

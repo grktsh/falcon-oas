@@ -77,3 +77,35 @@ def test_validate_format_non_string(spec, schema):
         SchemaValidator(spec).validate(instance, schema)
 
     assert exc_info.value.errors[0].message == message
+
+
+@pytest.mark.parametrize(
+    'instance,nullable', [('foo', False), ('foo', True), (None, True)]
+)
+def test_validate_nullable_success(spec, schema, instance, nullable):
+    schema['nullable'] = nullable
+    try:
+        SchemaValidator(spec).validate(instance, schema)
+    except ValidationError as e:
+        pytest.fail('Unexpected error: {}'.format(e))
+
+
+def test_validate_nullable_error(spec, schema):
+    schema['nullable'] = False
+    instance = None
+
+    with pytest.raises(ValidationError) as exc_info:
+        SchemaValidator(spec).validate(instance, schema)
+
+    assert exc_info.value.errors[0].message == "None is not of type 'string'"
+
+
+def test_validate_nullable_with_format(spec, schema):
+    schema['format'] = 'date'
+    schema['nullable'] = True
+    instance = None
+
+    try:
+        SchemaValidator(spec).validate(instance, schema)
+    except ValidationError as e:
+        pytest.fail('Unexpected error: {}'.format(e))

@@ -150,3 +150,18 @@ def test_unmarshal_without_parsers(spec, schema):
         instance, schema
     )
     assert unmarshaled == instance
+
+
+@pytest.mark.parametrize(
+    'schema',
+    [
+        {'type': 'string', 'nullable': True},
+        {'type': 'array', 'nullable': True},
+        {'type': 'object', 'nullable': True},
+        {'type': 'string', 'format': 'date', 'nullable': True},
+    ],
+)
+def test_unmarshal_nullable(spec, schema):
+    instance = None
+    unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
+    assert unmarshaled is None
