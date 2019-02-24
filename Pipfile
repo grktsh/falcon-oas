@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 
 [dev-packages]
+falcon-oas = {editable = true, extras = ["format", "test"], path = "."}
 setuptools-scm = "*"
 pre-commit = "*"
 twine = "*"
