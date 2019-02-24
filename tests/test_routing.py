@@ -10,11 +10,9 @@ from falcon_oas.oas.spec import create_spec_from_dict
 from falcon_oas.routing import generate_routes
 from tests.helpers import yaml_load_dedent
 
-FAKE_RESOURCE = object()
 
-
-def fake_resource_class():
-    return FAKE_RESOURCE
+class Resource(object):
+    pass
 
 
 @pytest.fixture
@@ -23,7 +21,7 @@ def spec_dict():
         """\
         paths:
           /path1:
-            x-falcon-resource: test_routing:fake_resource_class
+            x-falcon-resource: test_routing:Resource
           /path2:
             get:
               responses:
@@ -36,4 +34,4 @@ def spec_dict():
 def test_generate_routes(spec_dict):
     spec = create_spec_from_dict(spec_dict)
     routes = list(generate_routes(spec, base_module='tests'))
-    assert routes == [('/path1', FAKE_RESOURCE)]
+    assert routes == [('/path1', Resource)]

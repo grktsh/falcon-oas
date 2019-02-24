@@ -19,4 +19,4 @@ def generate_routes(spec, base_module=''):
             resource_class = import_string(
                 resource_name, base_module=base_module
             )
-            yield spec.base_path + path, resource_class()
+            yield spec.base_path + path, resource_class

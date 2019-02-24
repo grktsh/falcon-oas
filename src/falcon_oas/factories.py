@@ -36,10 +36,10 @@ def create_api(
     api.add_error_handler(UnmarshalError, unmarshal_error_handler)
     api.set_error_serializer(serialize_problem)
 
-    for uri_template, resource in generate_routes(
+    for uri_template, resource_class in generate_routes(
         spec, base_module=base_module
     ):
-        api.add_route(uri_template, resource)
+        api.add_route(uri_template, resource_class())
     return api
 
 
