@@ -88,5 +88,5 @@ class OperationMiddleware(object):
             )
             operation = None
 
-        req.context['oas._operation'] = operation
-        req.context['oas._request'] = oas_req
+        req.context['oas.operation'] = operation
+        req.context['oas.request'] = oas_req

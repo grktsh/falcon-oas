@@ -82,7 +82,7 @@ def test_undocumented_request(resource):
     assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
-    assert req.context['oas._operation'] is None
+    assert req.context['oas.operation'] is None
 
 
 def test_documented_request(resource):
@@ -102,13 +102,13 @@ def test_documented_request(resource):
     )
 
     req = resource.captured_req
-    assert req.context['oas._operation'] is not None
-    assert req.context['oas._request'].parameters['query'] == {
+    assert req.context['oas.operation'] is not None
+    assert req.context['oas.request'].parameters['query'] == {
         'q': '3',
         'r': ['5', '7'],
     }
-    assert req.context['oas._request'].parameters['header']['X-Key'] == 'key'
-    assert req.context['oas._request'].parameters['path'] == {'id': '2'}
-    assert req.context['oas._request'].parameters['cookie'] == {'x': '5'}
-    assert req.context['oas._request'].media_type == 'application/json'
-    assert req.context['oas._request'].get_media() == 'foo'
+    assert req.context['oas.request'].parameters['header']['X-Key'] == 'key'
+    assert req.context['oas.request'].parameters['path'] == {'id': '2'}
+    assert req.context['oas.request'].parameters['cookie'] == {'x': '5'}
+    assert req.context['oas.request'].media_type == 'application/json'
+    assert req.context['oas.request'].get_media() == 'foo'

@@ -18,14 +18,14 @@ class RequestUnmarshalMiddleware(object):
         )
 
     def process_resource(self, req, resp, resource, params):
-        operation = req.context['oas._operation']
+        operation = req.context['oas.operation']
         if operation is None:
             return
 
         parameters_error = None
         request_body_error = None
 
-        oas_req = req.context['oas._request']
+        oas_req = req.context['oas.request']
         try:
             parameters = self.parameters_unmarshaler.unmarshal(
                 oas_req.parameters, operation['parameters']

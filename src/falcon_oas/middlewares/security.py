@@ -19,12 +19,12 @@ class SecurityMiddleware(object):
         self.security_schemes = security_schemes
 
     def process_resource(self, req, resp, resource, params):
-        operation = req.context['oas._operation']
+        operation = req.context['oas.operation']
         if operation is None:
             return
 
         if self.security_schemes and operation['security']:
-            oas_req = req.context['oas._request']
+            oas_req = req.context['oas.request']
 
             for requirement in operation['security']:
                 user = self._satisfy_requirement(oas_req, requirement)
