@@ -15,12 +15,12 @@ def test_import_string_without_base_module():
     assert import_string(name) is OBJECT
 
 
-def test_import_string_wit_base_module():
+def test_import_string_with_base_module():
     name = 'test_utils.OBJECT'
     assert import_string(name, base_module='tests') is OBJECT
 
 
-def test_import_string_wit_base_module_dot():
+def test_import_string_with_base_module_dot():
     name = 'test_utils.OBJECT'
     assert import_string(name, base_module='tests.') is OBJECT
 
