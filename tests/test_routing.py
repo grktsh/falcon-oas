@@ -21,7 +21,7 @@ def spec_dict():
         """\
         paths:
           /path1:
-            x-falcon-resource: test_routing:Resource
+            x-falcon-resource: test_routing.Resource
           /path2:
             get:
               responses:

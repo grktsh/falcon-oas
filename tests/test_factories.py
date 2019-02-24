@@ -18,7 +18,7 @@ spec_dict = yaml_load_dedent(
     """\
     paths:
       /path:
-        x-falcon-resource: test_factories:Resource
+        x-falcon-resource: test_factories.Resource
         post:
           security:
           - api_key: []
@@ -30,7 +30,7 @@ spec_dict = yaml_load_dedent(
           type: apiKey
           name: X-API-Key
           in: header
-          x-user-loader: test_factories:api_key_loader
+          x-user-loader: test_factories.api_key_loader
     """
 )
 

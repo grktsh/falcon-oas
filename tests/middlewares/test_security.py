@@ -189,7 +189,7 @@ def test_get_security_schemes():
               type: apiKey
               name: session
               in: cookie
-              x-user-loader: middlewares.test_security:session_user_loader
+              x-user-loader: middlewares.test_security.session_user_loader
         """
     )
     spec = create_spec_from_dict(spec_dict)
