@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 import pytest
 
+from falcon_oas.extensions import FALCON_OAS_IMPLEMENTOR
 from falcon_oas.oas.spec import create_spec_from_dict
 from falcon_oas.routing import generate_routes
 from tests.helpers import yaml_load_dedent
@@ -21,13 +22,15 @@ def spec_dict():
         """\
         paths:
           /path1:
-            x-falcon-resource: test_routing.Resource
+            {}: test_routing.Resource
           /path2:
             get:
               responses:
                 default:
                   description: Success
-        """
+        """.format(
+            FALCON_OAS_IMPLEMENTOR
+        )
     )
 
 

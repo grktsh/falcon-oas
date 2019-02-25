@@ -8,6 +8,7 @@ import falcon
 import pytest
 from falcon import testing
 
+from falcon_oas.extensions import FALCON_OAS_IMPLEMENTOR
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.middlewares.security import get_security_schemes
 from falcon_oas.middlewares.security import SecurityMiddleware
@@ -189,8 +190,10 @@ def test_get_security_schemes():
               type: apiKey
               name: session
               in: cookie
-              x-user-loader: middlewares.test_security.session_user_loader
-        """
+              {}: middlewares.test_security.session_user_loader
+        """.format(
+            FALCON_OAS_IMPLEMENTOR
+        )
     )
     spec = create_spec_from_dict(spec_dict)
 

@@ -10,6 +10,7 @@ import falcon
 import pytest
 from falcon import testing
 
+from falcon_oas.extensions import FALCON_OAS_IMPLEMENTOR
 from falcon_oas.factories import create_api
 from tests.helpers import yaml_load_dedent
 
@@ -18,7 +19,7 @@ spec_dict = yaml_load_dedent(
     """\
     paths:
       /path:
-        x-falcon-resource: test_factories.Resource
+        {0}: test_factories.Resource
         post:
           security:
           - api_key: []
@@ -30,8 +31,10 @@ spec_dict = yaml_load_dedent(
           type: apiKey
           name: X-API-Key
           in: header
-          x-user-loader: test_factories.api_key_loader
-    """
+          {0}: test_factories.api_key_loader
+    """.format(
+        FALCON_OAS_IMPLEMENTOR
+    )
 )
 
 

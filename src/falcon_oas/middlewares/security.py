@@ -8,7 +8,7 @@ import logging
 import falcon
 from six import iteritems
 
-from ..extensions import X_USER_LOADER
+from ..extensions import FALCON_OAS_IMPLEMENTOR
 from ..utils import import_string
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ class SecurityMiddleware(object):
 
     def _satisfy_scheme(self, oas_req, key, scopes):
         try:
-            security_scheme, user_loader = self.security_schemes[key]
+            security_scheme, satisfy = self.security_schemes[key]
         except KeyError:
             return True
 
@@ -60,7 +60,7 @@ class SecurityMiddleware(object):
             location = security_scheme['in']
             name = security_scheme['name']
             value = oas_req.parameters[location].get(name)
-            return user_loader(value, oas_req)
+            return satisfy(value, oas_req)
 
         logger.warning(
             'Unsupported security scheme type: %r', security_scheme['type']
@@ -74,9 +74,10 @@ def get_security_schemes(spec, base_module=''):
         key: (
             security_scheme,
             import_string(
-                security_scheme[X_USER_LOADER], base_module=base_module
+                security_scheme[FALCON_OAS_IMPLEMENTOR],
+                base_module=base_module,
             ),
         )
         for key, security_scheme in iteritems(security_schemes)
-        if X_USER_LOADER in security_scheme
+        if FALCON_OAS_IMPLEMENTOR in security_scheme
     }
