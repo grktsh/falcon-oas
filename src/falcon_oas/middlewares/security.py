@@ -60,7 +60,7 @@ class SecurityMiddleware(object):
             location = security_scheme['in']
             name = security_scheme['name']
             value = oas_req.parameters[location].get(name)
-            return satisfy(value, oas_req)
+            return satisfy(value, scopes, oas_req)
 
         logger.warning(
             'Unsupported security scheme type: %r', security_scheme['type']

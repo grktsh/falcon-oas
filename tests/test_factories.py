@@ -51,7 +51,7 @@ class ElapsedMiddleware(object):
         resp.set_header('X-Elapsed', 100)
 
 
-def api_key_loader(value, req):
+def api_key_loader(value, scopes, req):
     return value and strtobool(value)
 
 

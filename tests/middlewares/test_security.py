@@ -18,7 +18,7 @@ from tests.helpers import yaml_load_dedent
 user = object()
 
 
-def session_user_loader(value, req):
+def session_user_loader(value, scopes, req):
     if value is None:
         return None
     return {'user': user, 'none': None, '1': True, '0': False}[value]
