@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import base64
 import datetime
 
 import pytest
@@ -21,6 +22,8 @@ from falcon_oas.oas.schema.parsers import DEFAULT_PARSERS
         ('int64', '0', 0),
         ('int64', str(-2 ** 63), -2 ** 63),
         ('int64', str(2 ** 63 - 1), 2 ** 63 - 1),
+        ('byte', base64.b64encode(b'foo'), b'foo'),
+        ('binary', '010203', b'\x01\x02\x03'),
         ('date', '2020-01-02', datetime.date(2020, 1, 2)),
         (
             'date-time',
@@ -49,6 +52,8 @@ def test_success(name, value, expected):
         ('int64', 'x'),
         ('int64', str(-2 ** 63 - 1)),
         ('int64', str(2 ** 63)),
+        ('byte', 'xxx'),
+        ('binary', 'xxx'),
         ('date', '2020/01/02'),
         ('date-time', '2020-01-02T03:04:05'),
         ('date-time', '2020/01/02T03:04:05Z'),

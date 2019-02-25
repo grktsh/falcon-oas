@@ -3,8 +3,24 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import base64
+import binascii
 import datetime
 import functools
+
+
+def raises(error):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except error as e:
+                raise ValueError(e)
+
+        return wrapper
+
+    return decorator
 
 
 def parse_int(value, min_int, max_int):
@@ -28,21 +44,9 @@ DEFAULT_PARSERS = {
         parse_int, min_int=-2 ** 63, max_int=2 ** 63 - 1
     ),
     'date': parse_date,
+    'byte': raises(TypeError)(base64.b64decode),
+    'binary': binascii.unhexlify,
 }
-
-
-def raises(error):
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except error as e:
-                raise ValueError(e)
-
-        return wrapper
-
-    return decorator
 
 
 try:
