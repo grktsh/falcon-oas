@@ -45,7 +45,7 @@ DEFAULT_PARSERS = {
     ),
     'date': parse_date,
     'byte': raises(TypeError)(base64.b64decode),
-    'binary': binascii.unhexlify,
+    'binary': raises(TypeError)(binascii.unhexlify),
 }
 
 
