@@ -135,12 +135,12 @@ def test_unmarshal_all_of(spec, schema):
 @pytest.mark.parametrize('schema_type', ['oneOf', 'anyOf'])
 def test_unmarshal_one_of_or_any_of(spec, schema, schema_type):
     schema[schema_type] = [
-        {'type': 'string', 'format': 'date'},
         {'type': 'integer'},
+        {'type': 'string', 'format': 'date'},
     ]
     instance = '2018-01-02'
     unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
-    assert unmarshaled == instance
+    assert unmarshaled == datetime.date(2018, 1, 2)
 
 
 def test_unmarshal_without_parsers(spec, schema):

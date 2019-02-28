@@ -7,7 +7,7 @@ import logging
 
 from six import iteritems
 
-from ..utils import pretty_json
+from ..exceptions import ValidationError
 from .parsers import DEFAULT_PARSERS
 from .validators import SchemaValidator
 
@@ -48,9 +48,12 @@ class SchemaUnmarshaler(object):
                 result.update(unmarshaled)
             return result
 
-        if 'type' not in schema:
-            logger.warning('Unsupported schema: %s', pretty_json(schema))
-            return value
+        for sub_schema in schema.get('oneOf') or schema.get('anyOf') or []:
+            try:
+                # TODO: Remove duplicate validation
+                return self.unmarshal(value, sub_schema)
+            except ValidationError:
+                pass
 
         try:
             handler = self._unmarshalers[schema['type']]
