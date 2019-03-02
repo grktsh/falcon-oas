@@ -47,20 +47,20 @@ def test_unmarshal_validation_error(spec, schema):
         ('string', 'foo'),
     ],
 )
-def test_unmarshal_atom(spec, schema, schema_type, instance):
+def test_unmarshal_primitive(spec, schema, schema_type, instance):
     schema['type'] = schema_type
     unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == instance
 
 
-def test_unmarshal_atom_format_date(spec, schema):
+def test_unmarshal_primitive_format_date(spec, schema):
     schema.update({'type': 'string', 'format': 'date'})
     instance = '2018-01-02'
     unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
     assert unmarshaled == datetime.date(2018, 1, 2)
 
 
-def test_unmarshal_atom_format_date_time(spec, schema):
+def test_unmarshal_primitive_format_date_time(spec, schema):
     schema.update({'type': 'string', 'format': 'date-time'})
     instance = '2018-01-02T03:04:05Z'
     unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)
@@ -69,7 +69,7 @@ def test_unmarshal_atom_format_date_time(spec, schema):
     )
 
 
-def test_unmarshal_atom_format_uri(spec, schema):
+def test_unmarshal_primitive_format_uri(spec, schema):
     schema.update({'type': 'string', 'format': 'uri'})
     instance = 'http://example.com/path'
     unmarshaled = SchemaUnmarshaler(spec).unmarshal(instance, schema)

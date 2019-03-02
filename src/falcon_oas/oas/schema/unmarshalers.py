@@ -55,7 +55,7 @@ class SchemaUnmarshaler(object):
         try:
             handler = self._unmarshalers[schema['type']]
         except KeyError:
-            handler = self._unmarshal_atom
+            handler = self._unmarshal_primitive
         return handler(value, schema)
 
     def _unmarshal_array(self, value, schema):
@@ -74,7 +74,7 @@ class SchemaUnmarshaler(object):
                 result[k] = self._unmarshal(sub_value, sub_schema)
         return result
 
-    def _unmarshal_atom(self, value, schema):
+    def _unmarshal_primitive(self, value, schema):
         try:
             parser = self.parsers[schema['format']]
         except KeyError:
