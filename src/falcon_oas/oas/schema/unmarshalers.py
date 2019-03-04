@@ -21,7 +21,7 @@ class SchemaUnmarshaler(object):
         else:
             self.parsers = parsers
 
-        self._validator = SchemaValidator(spec, parsers=self.parsers)
+        self._validator = SchemaValidator(parsers=self.parsers)
         self._unmarshalers = {
             'array': self._unmarshal_array,
             'object': self._unmarshal_object,
