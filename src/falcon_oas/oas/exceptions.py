@@ -90,7 +90,7 @@ class RequestBodyError(_Error):
 
 
 class _ValidationError(object):
-    path = None
+    path = []
     validator = None
     message = None
 
@@ -117,8 +117,7 @@ class MissingRequestBody(RequestBodyError):
 
 def _error_to_dict(error, obj_type):
     obj = obj_type()
-    if error.path:
-        obj['path'] = '.'.join(str(x) for x in error.path)
+    obj['path'] = list(error.path)
     obj['validator'] = error.validator
     obj['message'] = error.message
     return obj

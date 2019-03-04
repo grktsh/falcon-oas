@@ -51,7 +51,11 @@ def test_unmarshal_problem():
         'title': 'Unmarshal Error',
         'status': 400,
         'request_body': [
-            {'validator': 'required', 'message': 'request body is required'}
+            {
+                'path': [],
+                'validator': 'required',
+                'message': 'request body is required',
+            }
         ],
     }
 

@@ -24,13 +24,18 @@ def test_unmarshal_error():
             'query': [
                 {
                     'name': 'p1',
+                    'path': [],
                     'validator': 'required',
                     'message': 'parameter is required',
                 }
             ]
         },
         'request_body': [
-            {'validator': 'required', 'message': 'request body is required'}
+            {
+                'path': [],
+                'validator': 'required',
+                'message': 'request body is required',
+            }
         ],
     }
 
@@ -52,7 +57,7 @@ def test_parameters_error():
                 jsonschema.ValidationError(
                     "u'2018/01/02' is not a u'date'",
                     validator='format',
-                    path=['p1', 0, 'p2'],
+                    path=('p1', 0, 'p2'),
                 ),
             ],
         ),
@@ -63,17 +68,19 @@ def test_parameters_error():
             'query': [
                 {
                     'name': 'p1',
+                    'path': [],
                     'validator': 'type',
                     'message': "u'123' is not of type u'integer'",
                 },
                 {
                     'name': 'p1',
-                    'path': 'p1.0.p2',
+                    'path': ['p1', 0, 'p2'],
                     'validator': 'format',
                     'message': "u'2018/01/02' is not a u'date'",
                 },
                 {
                     'name': 'p2',
+                    'path': [],
                     'validator': 'required',
                     'message': 'parameter is required',
                 },
@@ -96,11 +103,12 @@ def test_request_body_validation_errors():
     assert RequestBodyError(errors).to_dict() == {
         'request_body': [
             {
+                'path': [],
                 'validator': 'type',
                 'message': "u'123' is not of type u'integer'",
             },
             {
-                'path': 'p1.p2',
+                'path': ['p1', 'p2'],
                 'validator': 'format',
                 'message': "u'2018/01/02' is not a u'date'",
             },
@@ -112,6 +120,10 @@ def test_request_body_missing_request_body():
     error = MissingRequestBody(str('application/json'))
     assert error.to_dict() == {
         'request_body': [
-            {'validator': 'required', 'message': 'request body is required'}
+            {
+                'path': [],
+                'validator': 'required',
+                'message': 'request body is required',
+            }
         ]
     }
