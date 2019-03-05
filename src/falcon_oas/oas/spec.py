@@ -57,11 +57,9 @@ class Spec(object):
 
     def get_security_schemes(self):
         try:
-            security_schemes = self.spec_dict['components']['securitySchemes']
+            return self.spec_dict['components']['securitySchemes']
         except KeyError:
             return None
-        else:
-            return security_schemes
 
     def _iter_parameters(self, path_item, operation):
         seen = set()
