@@ -82,7 +82,4 @@ def get_base_path(spec_dict):
 
 
 def get_security(spec_dict, base_security=None):
-    try:
-        return spec_dict['security']
-    except KeyError:
-        return base_security
+    return spec_dict.get('security', base_security)
