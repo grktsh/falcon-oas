@@ -25,9 +25,9 @@ class Spec(object):
     def __init__(self, spec_dict, base_path=None):
         self.spec_dict = spec_dict
         self.base_path = (
-            base_path if base_path is not None else get_base_path(spec_dict)
+            base_path if base_path is not None else _get_base_path(spec_dict)
         )
-        self._base_security = get_security(spec_dict)
+        self._base_security = _get_security(spec_dict)
 
     @lru_cache(maxsize=None)
     def get_operation(self, uri_template, method, media_type):
@@ -48,7 +48,7 @@ class Spec(object):
 
         result = operation.copy()
         result['parameters'] = list(self._iter_parameters(path_item, result))
-        result['security'] = get_security(
+        result['security'] = _get_security(
             result, base_security=self._base_security
         )
         return result
@@ -72,7 +72,7 @@ class Spec(object):
                 yield parameter_spec_dict
 
 
-def get_base_path(spec_dict):
+def _get_base_path(spec_dict):
     try:
         server = spec_dict['servers'][0]
     except (KeyError, IndexError):
@@ -81,5 +81,5 @@ def get_base_path(spec_dict):
         return urlparse(server['url']).path.rstrip('/')
 
 
-def get_security(spec_dict, base_security=None):
+def _get_security(spec_dict, base_security=None):
     return spec_dict.get('security', base_security)

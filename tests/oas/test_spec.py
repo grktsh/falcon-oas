@@ -8,9 +8,9 @@ import pytest
 
 from falcon_oas.oas.exceptions import UndocumentedMediaType
 from falcon_oas.oas.exceptions import UndocumentedRequest
+from falcon_oas.oas.spec import _get_base_path
+from falcon_oas.oas.spec import _get_security
 from falcon_oas.oas.spec import create_spec_from_dict
-from falcon_oas.oas.spec import get_base_path
-from falcon_oas.oas.spec import get_security
 from tests.helpers import yaml_load_dedent
 
 
@@ -242,7 +242,7 @@ def test_spec_get_security_schemes_none():
     ],
 )
 def test_base_path(spec_dict, expected):
-    assert get_base_path(spec_dict) == expected
+    assert _get_base_path(spec_dict) == expected
 
 
 @pytest.mark.parametrize(
@@ -255,4 +255,4 @@ def test_base_path(spec_dict, expected):
     ],
 )
 def test_security(spec_dict, base_security, expected):
-    assert get_security(spec_dict, base_security=base_security) == expected
+    assert _get_security(spec_dict, base_security=base_security) == expected
