@@ -9,8 +9,6 @@ import falcon
 class _Problem(falcon.HTTPError):
     """Represents predefined problem type of RFC 7807."""
 
-    has_representation = True
-
     def __init__(self, http_error):
         super(_Problem, self).__init__(
             http_error.status,
@@ -28,9 +26,6 @@ class _Problem(falcon.HTTPError):
 
 
 class UnmarshalProblem(falcon.HTTPError):
-
-    has_representation = True
-
     def __init__(self, unmarshal_error):
         super(UnmarshalProblem, self).__init__(
             falcon.HTTP_BAD_REQUEST, title='Unmarshal Error'
