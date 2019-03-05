@@ -15,8 +15,6 @@ from six.moves.urllib_parse import urlparse
 
 from .exceptions import UndocumentedRequest, UndocumentedMediaType
 
-DEFAULT_SERVER = {'url': '/'}
-
 
 def create_spec_from_dict(spec_dict, base_path=None):
     deref_spec_dict = jsonref.JsonRef.replace_refs(spec_dict)
@@ -78,8 +76,9 @@ def get_base_path(spec_dict):
     try:
         server = spec_dict['servers'][0]
     except (KeyError, IndexError):
-        server = DEFAULT_SERVER
-    return urlparse(server['url']).path.rstrip('/')
+        return ''
+    else:
+        return urlparse(server['url']).path.rstrip('/')
 
 
 def get_security(spec_dict, base_security=None):
