@@ -84,3 +84,14 @@ def test_create_api_with_middlewares():
 
     assert response.status == falcon.HTTP_FORBIDDEN
     assert response.headers['X-Elapsed'] == '100'
+
+
+def test_create_api_request_type():
+    resource = testing.SimpleTestResource()
+    api = create_api(spec_dict, base_module='tests')
+    api.add_route('/', resource)
+    client = testing.TestClient(api)
+    response = client.simulate_post(path='/')
+
+    assert response.status == falcon.HTTP_OK
+    assert type(resource.captured_req) is falcon.Request

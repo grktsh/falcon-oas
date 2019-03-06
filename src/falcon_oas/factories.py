@@ -15,12 +15,16 @@ from .oas.spec import create_spec_from_dict
 from .problems import http_error_handler
 from .problems import serialize_problem
 from .problems import unmarshal_error_handler
-from .request import Request
 from .routing import generate_routes
 
 
 def create_api(
-    spec_dict, middlewares=None, parsers=None, base_module='', base_path=None
+    spec_dict,
+    middlewares=None,
+    request_class=falcon.Request,
+    parsers=None,
+    base_module='',
+    base_path=None,
 ):
     spec = create_spec_from_dict(spec_dict, base_path=base_path)
 
@@ -30,7 +34,9 @@ def create_api(
     if middlewares is not None:
         default_middlewares.extend(middlewares)
 
-    api = falcon.API(middleware=default_middlewares, request_type=Request)
+    api = falcon.API(
+        middleware=default_middlewares, request_type=request_class
+    )
     api.req_options.auto_parse_qs_csv = False
     api.add_error_handler(falcon.HTTPError, http_error_handler)
     api.add_error_handler(UnmarshalError, unmarshal_error_handler)
