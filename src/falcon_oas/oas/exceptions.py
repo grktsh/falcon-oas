@@ -18,13 +18,11 @@ class UndocumentedMediaType(UndocumentedRequest):
 
 class ValidationError(Error):
     def __init__(self, errors):
-        super(ValidationError, self).__init__()
         self.errors = errors
 
 
 class UnmarshalError(Error):
     def __init__(self, parameters_error=None, request_body_error=None):
-        super(UnmarshalError, self).__init__()
         self.parameters_error = parameters_error
         self.request_body_error = request_body_error
 
@@ -39,7 +37,6 @@ class UnmarshalError(Error):
 
 class ParametersError(Error):
     def __init__(self, errors):
-        super(ParametersError, self).__init__()
         self.errors = errors
 
     def to_dict(self, obj_type=dict):
@@ -57,7 +54,6 @@ class ParametersError(Error):
 
 class ParameterError(Error):
     def __init__(self, name, location, errors):
-        super(ParameterError, self).__init__()
         self.name = name
         self.location = location
         self.errors = errors
@@ -65,20 +61,14 @@ class ParameterError(Error):
     def to_dict(self, obj_type=dict):
         obj = obj_type()
         obj[self.location] = [
-            self._error_to_dict(error, obj_type) for error in self.errors
+            _error_to_dict(error, obj_type, name=self.name)
+            for error in self.errors
         ]
-        return obj
-
-    def _error_to_dict(self, error, obj_type):
-        obj = obj_type()
-        obj['name'] = self.name
-        obj.update(_error_to_dict(error, obj_type))
         return obj
 
 
 class RequestBodyError(Error):
     def __init__(self, errors):
-        super(RequestBodyError, self).__init__()
         self.errors = errors
 
     def to_dict(self, obj_type=dict):
@@ -89,35 +79,33 @@ class RequestBodyError(Error):
         return obj
 
 
-class _ValidationError(object):
+class _Missing(object):
     path = []
-    validator = None
-    message = None
+    validator = 'required'
+
+    def __init__(self, name):
+        self.message = name + ' is required'
 
 
 class MissingParameter(ParameterError):
-    def __init__(self, name, location):
-        class _MissingParameter(_ValidationError):
-            validator = 'required'
-            message = 'parameter is required'
+    errors = [_Missing('parameter')]
 
-        errors = [_MissingParameter()]
-        super(MissingParameter, self).__init__(name, location, errors)
+    def __init__(self, name, location):
+        self.name = name
+        self.location = location
 
 
 class MissingRequestBody(RequestBodyError):
-    def __init__(self, media_type):
-        class _MissingRequestBody(_ValidationError):
-            validator = 'required'
-            message = 'request body is required'
+    errors = [_Missing('request body')]
 
-        super(MissingRequestBody, self).__init__([_MissingRequestBody()])
+    def __init__(self, media_type):
         self.media_type = media_type
 
 
-def _error_to_dict(error, obj_type):
+def _error_to_dict(error, obj_type, **kwargs):
     obj = obj_type()
     obj['path'] = list(error.path)
     obj['validator'] = error.validator
     obj['message'] = error.message
+    obj.update(**kwargs)
     return obj

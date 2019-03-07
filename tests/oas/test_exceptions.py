@@ -41,7 +41,7 @@ def test_unmarshal_error():
 
 
 def test_no_unmarshal_error():
-    error = UnmarshalError(None, None)
+    error = UnmarshalError()
     assert error.to_dict() == {}
 
 
@@ -112,18 +112,5 @@ def test_request_body_validation_errors():
                 'validator': 'format',
                 'message': "u'2018/01/02' is not a u'date'",
             },
-        ]
-    }
-
-
-def test_request_body_missing_request_body():
-    error = MissingRequestBody(str('application/json'))
-    assert error.to_dict() == {
-        'request_body': [
-            {
-                'path': [],
-                'validator': 'required',
-                'message': 'request body is required',
-            }
         ]
     }
