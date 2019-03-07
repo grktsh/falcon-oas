@@ -4,11 +4,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
-class _Error(Exception):
+class Error(Exception):
     pass
 
 
-class UndocumentedRequest(_Error):
+class UndocumentedRequest(Error):
     pass
 
 
@@ -16,13 +16,13 @@ class UndocumentedMediaType(UndocumentedRequest):
     pass
 
 
-class ValidationError(_Error):
+class ValidationError(Error):
     def __init__(self, errors):
         super(ValidationError, self).__init__()
         self.errors = errors
 
 
-class UnmarshalError(_Error):
+class UnmarshalError(Error):
     def __init__(self, parameters_error=None, request_body_error=None):
         super(UnmarshalError, self).__init__()
         self.parameters_error = parameters_error
@@ -37,7 +37,7 @@ class UnmarshalError(_Error):
         return obj
 
 
-class ParametersError(_Error):
+class ParametersError(Error):
     def __init__(self, errors):
         super(ParametersError, self).__init__()
         self.errors = errors
@@ -55,7 +55,7 @@ class ParametersError(_Error):
         return obj
 
 
-class ParameterError(_Error):
+class ParameterError(Error):
     def __init__(self, name, location, errors):
         super(ParameterError, self).__init__()
         self.name = name
@@ -76,7 +76,7 @@ class ParameterError(_Error):
         return obj
 
 
-class RequestBodyError(_Error):
+class RequestBodyError(Error):
     def __init__(self, errors):
         super(RequestBodyError, self).__init__()
         self.errors = errors
