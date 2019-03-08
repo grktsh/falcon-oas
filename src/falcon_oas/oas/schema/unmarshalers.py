@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class SchemaUnmarshaler(object):
-    def __init__(self, spec, parsers=None):
+    def __init__(self, parsers=None):
         if parsers is None:
             self.parsers = DEFAULT_PARSERS
         else:

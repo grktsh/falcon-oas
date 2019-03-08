@@ -12,14 +12,11 @@ from falcon_oas.oas.exceptions import MissingRequestBody
 from falcon_oas.oas.exceptions import RequestBodyError
 from falcon_oas.oas.request_body import RequestBodyUnmarshaler
 from falcon_oas.oas.schema.unmarshalers import SchemaUnmarshaler
-from falcon_oas.oas.spec import create_spec_from_dict
 
 
 @pytest.fixture
 def unmarshaler():
-    spec = create_spec_from_dict({})
-    unmarshaler = SchemaUnmarshaler(spec)
-    return RequestBodyUnmarshaler(unmarshaler)
+    return RequestBodyUnmarshaler(SchemaUnmarshaler())
 
 
 @pytest.fixture

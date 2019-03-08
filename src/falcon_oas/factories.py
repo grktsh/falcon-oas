@@ -53,7 +53,7 @@ def create_default_middlewares(spec, parsers=None, base_module=''):
     return [
         OperationMiddleware(spec),
         create_security_middleware(spec, base_module=base_module),
-        create_request_unmarshal_middleware(spec, parsers=parsers),
+        create_request_unmarshal_middleware(parsers=parsers),
     ]
 
 
@@ -62,6 +62,6 @@ def create_security_middleware(spec, base_module=''):
     return SecurityMiddleware(security_schemes)
 
 
-def create_request_unmarshal_middleware(spec, parsers=None):
-    schema_unmarshaler = SchemaUnmarshaler(spec, parsers=parsers)
+def create_request_unmarshal_middleware(parsers=None):
+    schema_unmarshaler = SchemaUnmarshaler(parsers=parsers)
     return RequestUnmarshalMiddleware(schema_unmarshaler)
