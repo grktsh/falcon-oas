@@ -14,6 +14,7 @@ from falcon_oas.problems import _Problem
 from falcon_oas.problems import http_error_handler
 from falcon_oas.problems import serialize_problem
 from falcon_oas.problems import unmarshal_error_handler
+from falcon_oas.problems import UNMARSHAL_PROBLEM_TYPE_URI
 from falcon_oas.problems import UnmarshalProblem
 
 
@@ -48,6 +49,7 @@ def test_unmarshal_problem():
     problem = UnmarshalProblem(unmarshal_error)
 
     assert problem.to_dict() == {
+        'type': UNMARSHAL_PROBLEM_TYPE_URI,
         'title': 'Unmarshal Error',
         'status': 400,
         'request_body': [

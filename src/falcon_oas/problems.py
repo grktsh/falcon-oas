@@ -6,6 +6,14 @@ from __future__ import unicode_literals
 import falcon
 
 
+UNMARSHAL_PROBLEM_VERSION = '0.3.0'
+UNMARSHAL_PROBLEM_TYPE_URI = (
+    'https://pypi.org/project/falcon-oas/'
+    + UNMARSHAL_PROBLEM_VERSION
+    + '/#unmarshal-problem'
+)
+
+
 class _Problem(falcon.HTTPError):
     """Represents predefined problem type of RFC 7807."""
 
@@ -34,6 +42,7 @@ class UnmarshalProblem(falcon.HTTPError):
 
     def to_dict(self, obj_type=dict):
         obj = obj_type()
+        obj['type'] = UNMARSHAL_PROBLEM_TYPE_URI
         obj['title'] = self.title
         obj['status'] = int(self.status[:3])
         obj.update(self.unmarshal_error.to_dict(obj_type=obj_type))
