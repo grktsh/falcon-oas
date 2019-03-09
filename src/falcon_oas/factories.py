@@ -18,50 +18,51 @@ from .problems import unmarshal_error_handler
 from .routing import generate_routes
 
 
-def create_api(
-    spec_dict,
-    middlewares=None,
-    request_class=falcon.Request,
-    parsers=None,
-    base_module='',
-    base_path=None,
-):
-    spec = create_spec_from_dict(spec_dict, base_path=base_path)
-
-    default_middlewares = create_default_middlewares(
-        spec, parsers=parsers, base_module=base_module
-    )
-    if middlewares is not None:
-        default_middlewares.extend(middlewares)
-
-    api = falcon.API(
-        middleware=default_middlewares, request_type=request_class
-    )
-    api.req_options.auto_parse_qs_csv = False
-    api.add_error_handler(falcon.HTTPError, http_error_handler)
-    api.add_error_handler(UnmarshalError, unmarshal_error_handler)
-    api.set_error_serializer(serialize_problem)
-
-    for uri_template, resource_class in generate_routes(
-        spec, base_module=base_module
+class OAS(object):
+    def __init__(
+        self,
+        spec_dict,
+        parsers=None,
+        base_module='',
+        base_path=None,
+        api_factory=falcon.API,
+        problems=True,
     ):
-        api.add_route(uri_template, resource_class())
-    return api
+        self.spec = create_spec_from_dict(spec_dict, base_path=base_path)
+        self.parsers = parsers
+        self.base_module = base_module
+        self.api_factory = api_factory
+        self.problems = problems
 
+    def create_api(self, **options):
+        if 'middleware' not in options:
+            options['middleware'] = self.middlewares
 
-def create_default_middlewares(spec, parsers=None, base_module=''):
-    return [
-        OperationMiddleware(spec),
-        create_security_middleware(spec, base_module=base_module),
-        create_request_unmarshal_middleware(parsers=parsers),
-    ]
+        return self.setup(self.api_factory(**options))
 
+    @property
+    def middlewares(self):
+        security_schemes = get_security_schemes(
+            self.spec, base_module=self.base_module
+        )
+        schema_unmarshaler = SchemaUnmarshaler(parsers=self.parsers)
+        return [
+            OperationMiddleware(self.spec),
+            SecurityMiddleware(security_schemes),
+            RequestUnmarshalMiddleware(schema_unmarshaler),
+        ]
 
-def create_security_middleware(spec, base_module=''):
-    security_schemes = get_security_schemes(spec, base_module=base_module)
-    return SecurityMiddleware(security_schemes)
+    def setup(self, api):
+        api.req_options.auto_parse_qs_csv = False
 
+        if self.problems:
+            api.add_error_handler(falcon.HTTPError, http_error_handler)
+            api.add_error_handler(UnmarshalError, unmarshal_error_handler)
+            api.set_error_serializer(serialize_problem)
 
-def create_request_unmarshal_middleware(parsers=None):
-    schema_unmarshaler = SchemaUnmarshaler(parsers=parsers)
-    return RequestUnmarshalMiddleware(schema_unmarshaler)
+        for uri_template, resource_class in generate_routes(
+            self.spec, base_module=self.base_module
+        ):
+            api.add_route(uri_template, resource_class())
+
+        return api
