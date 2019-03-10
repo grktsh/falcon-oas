@@ -137,10 +137,10 @@ def test_unmarshal_one_of_or_any_of(schema, schema_type):
     assert unmarshaled == datetime.date(2018, 1, 2)
 
 
-def test_unmarshal_without_parsers(schema):
+def test_unmarshal_without_formats(schema):
     schema.update({'type': 'string', 'format': 'date'})
     instance = '2018-01-02'
-    unmarshaled = SchemaUnmarshaler(parsers={}).unmarshal(instance, schema)
+    unmarshaled = SchemaUnmarshaler(formats={}).unmarshal(instance, schema)
     assert unmarshaled == instance
 
 

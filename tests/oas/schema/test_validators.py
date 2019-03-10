@@ -33,7 +33,7 @@ def test_validate_error(schema):
     assert exc_info.value.errors[0].message == message
 
 
-def test_validate_format(schema):
+def test_validate_format_string(schema):
     schema['format'] = 'date'
     instance = '2018-01-02'
     try:
@@ -42,7 +42,7 @@ def test_validate_format(schema):
         pytest.fail('Unexpected error: {}'.format(e))
 
 
-def test_validate_format_error(schema):
+def test_validate_format_string_error(schema):
     schema['format'] = str('date')
     instance = str('2018/01/02')
     message = "'2018/01/02' is not a 'date'"
@@ -53,11 +53,34 @@ def test_validate_format_error(schema):
     assert exc_info.value.errors[0].message == message
 
 
-def test_validate_without_parsers(schema):
+@pytest.mark.parametrize('instance', [-2 ** 31, 0, 2 ** 31 - 1])
+def test_validate_format_integer(schema, instance):
+    schema['type'] = 'integer'
+    schema['format'] = 'int32'
+    try:
+        SchemaValidator().validate(instance, schema)
+    except ValidationError as e:
+        pytest.fail('Unexpected error: {}'.format(e))
+
+
+@pytest.mark.parametrize('instance', [-2 ** 31 - 1, 2 ** 31])
+def test_validate_format_integer_error(schema, instance):
+    schema['type'] = 'integer'
+    schema['format'] = str('int32')
+
+    with pytest.raises(ValidationError) as exc_info:
+        SchemaValidator().validate(instance, schema)
+
+    assert exc_info.value.errors[0].message == "{} is not a 'int32'".format(
+        instance
+    )
+
+
+def test_validate_without_formats(schema):
     schema['format'] = 'date'
     instance = '2018/01/02'
     try:
-        SchemaValidator(parsers={}).validate(instance, schema)
+        SchemaValidator(formats={}).validate(instance, schema)
     except ValidationError as e:
         pytest.fail('Unexpected error: {}'.format(e))
 

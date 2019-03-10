@@ -23,29 +23,34 @@ def raises(error):
     return decorator
 
 
-def parse_int(value, min_int, max_int):
-    n = int(value)
-    if not (min_int <= n <= max_int):
+def bounded(value, min_value, max_value):
+    if not (min_value <= value <= max_value):
         raise ValueError(
-            'Must be between {} and {}: {!r}'.format(min_int, max_int, value)
+            'Must be between {} and {}: {!r}'.format(
+                min_value, max_value, value
+            )
         )
-    return n
+    return value
 
 
 def parse_date(value):
     return datetime.datetime.strptime(value, '%Y-%m-%d').date()
 
 
-DEFAULT_PARSERS = {
-    'int32': functools.partial(
-        parse_int, min_int=-2 ** 31, max_int=2 ** 31 - 1
-    ),
-    'int64': functools.partial(
-        parse_int, min_int=-2 ** 63, max_int=2 ** 63 - 1
-    ),
-    'date': parse_date,
-    'byte': raises(TypeError)(base64.b64decode),
-    'binary': raises(TypeError)(binascii.unhexlify),
+DEFAULT_FORMATS = {
+    'integer': {
+        'int32': functools.partial(
+            bounded, min_value=-2 ** 31, max_value=2 ** 31 - 1
+        ),
+        'int64': functools.partial(
+            bounded, min_value=-2 ** 63, max_value=2 ** 63 - 1
+        ),
+    },
+    'string': {
+        'date': parse_date,
+        'byte': raises(TypeError)(base64.b64decode),
+        'binary': raises(TypeError)(binascii.unhexlify),
+    },
 }
 
 
@@ -54,7 +59,9 @@ try:
 except ImportError:  # pragma: no cover
     pyrfc3339 = None
 else:
-    DEFAULT_PARSERS['date-time'] = functools.partial(pyrfc3339.parse, utc=True)
+    DEFAULT_FORMATS['string']['date-time'] = functools.partial(
+        pyrfc3339.parse, utc=True
+    )
 
 try:
     import rfc3986
@@ -71,4 +78,4 @@ else:
         validator.validate(uri)
         return value
 
-    DEFAULT_PARSERS['uri'] = parse_uri
+    DEFAULT_FORMATS['string']['uri'] = parse_uri

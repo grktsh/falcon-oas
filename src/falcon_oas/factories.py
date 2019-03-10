@@ -22,14 +22,14 @@ class OAS(object):
     def __init__(
         self,
         spec_dict,
-        parsers=None,
+        formats=None,
         base_module='',
         base_path=None,
         api_factory=falcon.API,
         problems=True,
     ):
         self.spec = create_spec_from_dict(spec_dict, base_path=base_path)
-        self.parsers = parsers
+        self.formats = formats
         self.base_module = base_module
         self.api_factory = api_factory
         self.problems = problems
@@ -45,7 +45,7 @@ class OAS(object):
         security_schemes = get_security_schemes(
             self.spec, base_module=self.base_module
         )
-        schema_unmarshaler = SchemaUnmarshaler(parsers=self.parsers)
+        schema_unmarshaler = SchemaUnmarshaler(formats=self.formats)
         return [
             OperationMiddleware(self.spec),
             SecurityMiddleware(security_schemes),

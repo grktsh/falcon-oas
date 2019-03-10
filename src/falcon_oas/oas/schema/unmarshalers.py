@@ -8,20 +8,20 @@ import logging
 from six import iteritems
 
 from ..exceptions import ValidationError
-from .parsers import DEFAULT_PARSERS
+from .formats import DEFAULT_FORMATS
 from .validators import SchemaValidator
 
 logger = logging.getLogger(__name__)
 
 
 class SchemaUnmarshaler(object):
-    def __init__(self, parsers=None):
-        if parsers is None:
-            self.parsers = DEFAULT_PARSERS
+    def __init__(self, formats=None):
+        if formats is None:
+            self.formats = DEFAULT_FORMATS
         else:
-            self.parsers = parsers
+            self.formats = formats
 
-        self._validator = SchemaValidator(parsers=self.parsers)
+        self._validator = SchemaValidator(formats=self.formats)
         self._unmarshalers = {
             'array': self._unmarshal_array,
             'object': self._unmarshal_object,
@@ -79,8 +79,8 @@ class SchemaUnmarshaler(object):
 
     def _unmarshal_primitive(self, value, schema):
         try:
-            parser = self.parsers[schema['format']]
+            modifier = self.formats[schema['type']][schema['format']]
         except KeyError:
             return value
         else:
-            return parser(value)
+            return modifier(value)
