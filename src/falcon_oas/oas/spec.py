@@ -47,7 +47,7 @@ class Spec(object):
                 raise UndocumentedMediaType()
 
         result = operation.copy()
-        result['parameters'] = list(self._iter_parameters(path_item, result))
+        result['parameters'] = list(self._iter_parameters(result, path_item))
         result['security'] = _get_security(
             result, base_security=self._base_security
         )
@@ -59,7 +59,7 @@ class Spec(object):
         except KeyError:
             return None
 
-    def _iter_parameters(self, path_item, operation):
+    def _iter_parameters(self, operation, path_item):
         seen = set()
         for spec_dict in (operation, path_item):
             if 'parameters' not in spec_dict:
