@@ -26,6 +26,9 @@ class SecurityMiddleware(object):
         if self._security_schemes and operation['security']:
             oas_req = req.context['oas.request']
 
+            # ``requirement`` is a alternative security requirement
+            # object.  Only one of the security requirement objects
+            # need to be satisfied to authorize a request.
             for requirement in operation['security']:
                 user = self._satisfy_requirement(oas_req, requirement)
                 if user:
@@ -41,19 +44,24 @@ class SecurityMiddleware(object):
             raise falcon.HTTPForbidden()
 
     def _satisfy_requirement(self, oas_req, requirement):
+        # All schemes MUST be satisfied for a request to be authorized.
         result = True
-        for key, scopes in iteritems(requirement):
-            user = self._satisfy_scheme(oas_req, key, scopes)
+        for name, scopes in iteritems(requirement):
+            user = self._satisfy_scheme(oas_req, name, scopes)
             if not user:
                 return False
             if user is not True:
                 result = user
         return result
 
-    def _satisfy_scheme(self, oas_req, key, scopes):
+    def _satisfy_scheme(self, oas_req, name, scopes):
+        # Each name MUST correspond to a security scheme which is
+        # declared in the Security Schemes under the Components Object,
         try:
-            security_scheme, satisfy = self._security_schemes[key]
+            security_scheme, satisfy = self._security_schemes[name]
         except KeyError:
+            # When ``FALCON_OAS_IMPLEMENTOR`` is not specified, KeyError
+            # is raised.
             return True
 
         if security_scheme['type'] == 'apiKey':

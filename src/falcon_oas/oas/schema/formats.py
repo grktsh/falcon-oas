@@ -10,6 +10,8 @@ import functools
 
 
 def raises(error):
+    """Return a decorator to wrap the error with ValueError."""
+
     def decorator(f):
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
@@ -37,6 +39,9 @@ def parse_date(value):
     return datetime.datetime.strptime(value, '%Y-%m-%d').date()
 
 
+# The format modifier/validator can assume the type of the value is
+# valid and modify it to any type.  When it raises ValueError it will
+# be handled as ``format`` error by jsonschema.
 DEFAULT_FORMATS = {
     'integer': {
         'int32': functools.partial(

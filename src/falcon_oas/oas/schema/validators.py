@@ -65,7 +65,9 @@ def _to_checker(schema_type, validator):
     def checker(instance):
         types = _primitive_types[schema_type]
         if not isinstance(instance, types):
+            # Let type validator handle the type error
             return True
+        # ``validator`` raises ValueError when format error
         validator(instance)
         return True
 
