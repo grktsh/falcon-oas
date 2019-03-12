@@ -10,12 +10,8 @@ from falcon_oas.oas.schema.validators import SchemaValidator
 from falcon_oas.oas.schema.validators import ValidationError
 
 
-@pytest.fixture
-def schema():
-    return {'type': str('string')}
-
-
-def test_validate_success(schema):
+def test_validate_success():
+    schema = {'type': 'string'}
     instance = 'foo'
     try:
         SchemaValidator().validate(instance, schema)
@@ -23,18 +19,20 @@ def test_validate_success(schema):
         pytest.fail('Unexpected error: {}'.format(e))
 
 
-def test_validate_error(schema):
+def test_validate_error():
+    schema = {'type': str('string')}
     instance = 123
     message = "123 is not of type 'string'"
 
     with pytest.raises(ValidationError) as exc_info:
         SchemaValidator().validate(instance, schema)
 
+    assert len(exc_info.value.errors) == 1
     assert exc_info.value.errors[0].message == message
 
 
-def test_validate_format_string(schema):
-    schema['format'] = 'date'
+def test_validate_format_string():
+    schema = {'type': 'string', 'format': 'date'}
     instance = '2018-01-02'
     try:
         SchemaValidator().validate(instance, schema)
@@ -42,21 +40,21 @@ def test_validate_format_string(schema):
         pytest.fail('Unexpected error: {}'.format(e))
 
 
-def test_validate_format_string_error(schema):
-    schema['format'] = str('date')
+def test_validate_format_string_error():
+    schema = {'type': 'string', 'format': str('date')}
     instance = str('2018/01/02')
     message = "'2018/01/02' is not a 'date'"
 
     with pytest.raises(ValidationError) as exc_info:
         SchemaValidator().validate(instance, schema)
 
+    assert len(exc_info.value.errors) == 1
     assert exc_info.value.errors[0].message == message
 
 
 @pytest.mark.parametrize('instance', [-2 ** 31, 0, 2 ** 31 - 1])
-def test_validate_format_integer(schema, instance):
-    schema['type'] = 'integer'
-    schema['format'] = 'int32'
+def test_validate_format_integer(instance):
+    schema = {'type': 'integer', 'format': 'int32'}
     try:
         SchemaValidator().validate(instance, schema)
     except ValidationError as e:
@@ -64,20 +62,31 @@ def test_validate_format_integer(schema, instance):
 
 
 @pytest.mark.parametrize('instance', [-2 ** 31 - 1, 2 ** 31])
-def test_validate_format_integer_error(schema, instance):
-    schema['type'] = 'integer'
-    schema['format'] = str('int32')
+def test_validate_format_integer_error(instance):
+    schema = {'type': 'integer', 'format': str('int32')}
+    message = "{} is not a 'int32'".format(instance)
 
     with pytest.raises(ValidationError) as exc_info:
         SchemaValidator().validate(instance, schema)
 
-    assert exc_info.value.errors[0].message == "{} is not a 'int32'".format(
-        instance
-    )
+    assert len(exc_info.value.errors) == 1
+    assert exc_info.value.errors[0].message == message
 
 
-def test_validate_without_formats(schema):
-    schema['format'] = 'date'
+def test_validate_format_type_error():
+    schema = {'type': str('string'), 'format': 'date'}
+    instance = 123
+    message = "123 is not of type 'string'"
+
+    with pytest.raises(ValidationError) as exc_info:
+        SchemaValidator().validate(instance, schema)
+
+    assert len(exc_info.value.errors) == 1
+    assert exc_info.value.errors[0].message == message
+
+
+def test_validate_format_error_without_format_checker():
+    schema = {'type': 'string', 'format': 'date'}
     instance = '2018/01/02'
     try:
         SchemaValidator(formats={}).validate(instance, schema)
@@ -85,41 +94,30 @@ def test_validate_without_formats(schema):
         pytest.fail('Unexpected error: {}'.format(e))
 
 
-def test_validate_format_non_string(schema):
-    schema['format'] = 'date'
-    instance = 123
-    message = "123 is not of type 'string'"
-
-    with pytest.raises(ValidationError) as exc_info:
-        SchemaValidator().validate(instance, schema)
-
-    assert exc_info.value.errors[0].message == message
-
-
 @pytest.mark.parametrize(
     'instance,nullable', [('foo', False), ('foo', True), (None, True)]
 )
-def test_validate_nullable_success(schema, instance, nullable):
-    schema['nullable'] = nullable
+def test_validate_nullable_success(instance, nullable):
+    schema = {'type': 'string', 'nullable': nullable}
     try:
         SchemaValidator().validate(instance, schema)
     except ValidationError as e:
         pytest.fail('Unexpected error: {}'.format(e))
 
 
-def test_validate_nullable_error(schema):
-    schema['nullable'] = False
+def test_validate_nullable_error():
+    schema = {'type': str('string'), 'nullable': False}
     instance = None
 
     with pytest.raises(ValidationError) as exc_info:
         SchemaValidator().validate(instance, schema)
 
+    assert len(exc_info.value.errors) == 1
     assert exc_info.value.errors[0].message == "None is not of type 'string'"
 
 
-def test_validate_nullable_with_format(schema):
-    schema['format'] = 'date'
-    schema['nullable'] = True
+def test_validate_nullable_with_format():
+    schema = {'type': 'string', 'format': 'date', 'nullable': True}
     instance = None
 
     try:
