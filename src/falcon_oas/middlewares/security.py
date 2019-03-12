@@ -16,14 +16,14 @@ logger = logging.getLogger(__name__)
 
 class SecurityMiddleware(object):
     def __init__(self, security_schemes):
-        self.security_schemes = security_schemes
+        self._security_schemes = security_schemes
 
     def process_resource(self, req, resp, resource, params):
         operation = req.context['oas.operation']
         if operation is None:
             return
 
-        if self.security_schemes and operation['security']:
+        if self._security_schemes and operation['security']:
             oas_req = req.context['oas.request']
 
             for requirement in operation['security']:
@@ -52,7 +52,7 @@ class SecurityMiddleware(object):
 
     def _satisfy_scheme(self, oas_req, key, scopes):
         try:
-            security_scheme, satisfy = self.security_schemes[key]
+            security_scheme, satisfy = self._security_schemes[key]
         except KeyError:
             return True
 

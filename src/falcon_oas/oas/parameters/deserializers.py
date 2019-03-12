@@ -8,7 +8,7 @@ from distutils.util import strtobool
 
 logger = logging.getLogger(__name__)
 
-parameter_deserializers = {
+_parameter_deserializers = {
     'integer': int,
     'number': float,
     'boolean': strtobool,
@@ -24,7 +24,7 @@ def deserialize_parameter(value, schema):
         return value
 
     try:
-        deserialize = parameter_deserializers[schema_type]
+        deserialize = _parameter_deserializers[schema_type]
     except KeyError:
         logger.warning('Unsupported parameter schema type: %r', schema_type)
         return value

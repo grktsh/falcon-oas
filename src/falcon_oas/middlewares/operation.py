@@ -17,58 +17,58 @@ logger = logging.getLogger(__name__)
 
 class _Indexer(object):
     def __init__(self, getter):
-        self.getter = getter
+        self._getter = getter
 
     def __getitem__(self, key):
         try:
-            return self.getter(key, required=True)
+            return self._getter(key, required=True)
         except falcon.HTTPBadRequest:
             raise KeyError(key)
 
     def get(self, key, default=None):
-        return self.getter(key, default=default)
+        return self._getter(key, default=default)
 
 
 class _RequestAdapter(Request):
     def __init__(self, req, params):
-        self.req = req
-        self.params = params
+        self._req = req
+        self._params = params
 
     @property
     def uri_template(self):
-        return self.req.uri_template
+        return self._req.uri_template
 
     @property
     def method(self):
-        return self.req.method.lower()
+        return self._req.method.lower()
 
     @cached_property
     def parameters(self):
         return {
-            'query': self.req.params,
-            'header': _Indexer(self.req.get_header),
-            'path': self.params,
-            'cookie': self.req.cookies,
+            'query': self._req.params,
+            'header': _Indexer(self._req.get_header),
+            'path': self._params,
+            'cookie': self._req.cookies,
         }
 
     @property
     def media_type(self):
-        content_type = self.req.content_type
+        content_type = self._req.content_type
         return content_type and content_type.split(';', 1)[0]
 
     def get_media(self):
-        return self.req.media
+        return self._req.media
 
 
 class OperationMiddleware(object):
     def __init__(self, spec):
-        self.spec = spec
+        self._spec = spec
 
     def process_resource(self, req, resp, resource, params):
         oas_req = _RequestAdapter(req, params)
 
         try:
-            operation = self.spec.get_operation(
+            operation = self._spec.get_operation(
                 oas_req.uri_template, oas_req.method, oas_req.media_type
             )
         except UndocumentedMediaType:

@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 
 class ParametersUnmarshaler(object):
-    def __init__(self, unmarshaler):
-        self.unmarshaler = unmarshaler
+    def __init__(self, schema_unmarshaler):
+        self._unmarshal_schema = schema_unmarshaler.unmarshal
 
     def unmarshal(self, values, parameters):
         non_confidential_values = {
@@ -65,7 +65,7 @@ class ParametersUnmarshaler(object):
 
     def _unmarshal(self, value, schema):
         value = deserialize_parameter(value, schema)
-        value = self.unmarshaler.unmarshal(value, schema)
+        value = self._unmarshal_schema(value, schema)
         return value
 
     def _get_value(self, values, location, name, schema):

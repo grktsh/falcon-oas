@@ -37,12 +37,12 @@ _Validator = validators.extend(Draft4Validator, {'type': _type_validator})
 
 class SchemaValidator(object):
     def __init__(self, formats=None):
-        self.format_checker = _create_format_checker_from_formats(
+        self._format_checker = _create_format_checker_from_formats(
             formats=formats
         )
 
     def validate(self, instance, schema):
-        validator = _Validator(schema, format_checker=self.format_checker)
+        validator = _Validator(schema, format_checker=self._format_checker)
         errors = list(validator.iter_errors(instance))
         if errors:
             raise ValidationError(errors)

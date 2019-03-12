@@ -12,10 +12,12 @@ from ..oas.request_body import RequestBodyUnmarshaler
 
 class RequestUnmarshalMiddleware(object):
     def __init__(self, schema_unmarshaler):
-        self.parameters_unmarshaler = ParametersUnmarshaler(schema_unmarshaler)
-        self.request_body_unmarshaler = RequestBodyUnmarshaler(
+        self._unmarshal_parameters = ParametersUnmarshaler(
             schema_unmarshaler
-        )
+        ).unmarshal
+        self._unmarshal_request_body = RequestBodyUnmarshaler(
+            schema_unmarshaler
+        ).unmarshal
 
     def process_resource(self, req, resp, resource, params):
         operation = req.context['oas.operation']
@@ -27,7 +29,7 @@ class RequestUnmarshalMiddleware(object):
 
         oas_req = req.context['oas.request']
         try:
-            parameters = self.parameters_unmarshaler.unmarshal(
+            parameters = self._unmarshal_parameters(
                 oas_req.parameters, operation['parameters']
             )
         except ParametersError as e:
@@ -39,7 +41,7 @@ class RequestUnmarshalMiddleware(object):
 
         if 'requestBody' in operation:
             try:
-                request_body = self.request_body_unmarshaler.unmarshal(
+                request_body = self._unmarshal_request_body(
                     oas_req.get_media,
                     oas_req.media_type,
                     operation['requestBody'],

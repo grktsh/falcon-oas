@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 class SchemaUnmarshaler(object):
     def __init__(self, formats=None):
         if formats is None:
-            self.formats = DEFAULT_FORMATS
+            self._formats = DEFAULT_FORMATS
         else:
-            self.formats = formats
+            self._formats = formats
 
-        self._validate = SchemaValidator(formats=self.formats).validate
+        self._validate = SchemaValidator(formats=self._formats).validate
         self._unmarshalers = {
             'array': self._unmarshal_array,
             'object': self._unmarshal_object,
@@ -87,7 +87,7 @@ class SchemaUnmarshaler(object):
 
     def _unmarshal_primitive(self, instance, schema):
         try:
-            modifier = self.formats[schema['type']][schema['format']]
+            modifier = self._formats[schema['type']][schema['format']]
         except KeyError:
             return instance
         else:

@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class RequestBodyUnmarshaler(object):
-    def __init__(self, unmarshaler):
-        self.unmarshaler = unmarshaler
+    def __init__(self, schema_unmarshaler):
+        self._unmarshal_schema = schema_unmarshaler.unmarshal
 
     def unmarshal(self, get_value, media_type, request_body_spec_dict):
         try:
@@ -56,5 +56,5 @@ class RequestBodyUnmarshaler(object):
             logger.warning('Missing schema')
             return value
 
-        value = self.unmarshaler.unmarshal(value, schema)
+        value = self._unmarshal_schema(value, schema)
         return value
