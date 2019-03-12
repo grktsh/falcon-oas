@@ -7,73 +7,54 @@ from __future__ import unicode_literals
 import datetime
 
 import pytest
-import pytz
 
 from falcon_oas.oas.exceptions import ValidationError
 from falcon_oas.oas.schema.unmarshalers import SchemaUnmarshaler
 
 
-@pytest.fixture
-def schema():
-    return {}
-
-
-def test_unmarshal_validation_error(schema):
-    schema['type'] = str('string')
+def test_unmarshal_validation_error():
+    schema = {'type': str('string')}
     instance = 123
     message = "123 is not of type 'string'"
 
     with pytest.raises(ValidationError) as exc_info:
         SchemaUnmarshaler().unmarshal(instance, schema)
-
     assert exc_info.value.errors[0].message == message
 
 
 @pytest.mark.parametrize(
-    'schema_type,instance',
+    'schema,instance',
     [
-        ('boolean', True),
-        ('boolean', False),
-        ('number', 0.0),
-        ('number', 2.0),
-        ('integer', 0),
-        ('integer', 2),
-        ('string', 'foo'),
+        ({'type': 'boolean'}, True),
+        ({'type': 'boolean'}, False),
+        ({'type': 'number'}, 0.0),
+        ({'type': 'number'}, 2.0),
+        ({'type': 'integer'}, 0),
+        ({'type': 'integer'}, 2),
+        ({'type': 'string'}, 'foo'),
     ],
 )
-def test_unmarshal_primitive(schema, schema_type, instance):
-    schema['type'] = schema_type
+def test_unmarshal_primitive(schema, instance):
     unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
     assert unmarshaled == instance
 
 
-def test_unmarshal_primitive_format_date(schema):
-    schema.update({'type': 'string', 'format': 'date'})
+def test_unmarshal_primitive_format():
+    schema = {'type': 'string', 'format': 'date'}
     instance = '2018-01-02'
     unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
     assert unmarshaled == datetime.date(2018, 1, 2)
 
 
-def test_unmarshal_primitive_format_date_time(schema):
-    schema.update({'type': 'string', 'format': 'date-time'})
-    instance = '2018-01-02T03:04:05Z'
-    unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
-    assert unmarshaled == datetime.datetime(
-        2018, 1, 2, 3, 4, 5, tzinfo=pytz.utc
-    )
-
-
-def test_unmarshal_primitive_format_uri(schema):
-    schema.update({'type': 'string', 'format': 'uri'})
-    instance = 'http://example.com/path'
-    unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
+def test_unmarshal_primitive_without_formats():
+    schema = {'type': 'string', 'format': 'date'}
+    instance = '2018-01-02'
+    unmarshaled = SchemaUnmarshaler(formats={}).unmarshal(instance, schema)
     assert unmarshaled == instance
 
 
-def test_unmarshal_array(schema):
-    schema.update(
-        {'type': 'array', 'items': {'type': 'string', 'format': 'date'}}
-    )
+def test_unmarshal_array():
+    schema = {'type': 'array', 'items': {'type': 'string', 'format': 'date'}}
     instance = ['2018-01-02', '2018-02-03', '2018-03-04']
     unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
     assert unmarshaled == [
@@ -83,21 +64,19 @@ def test_unmarshal_array(schema):
     ]
 
 
-def test_unmarshal_object(schema):
-    schema.update(
-        {
-            'type': 'object',
-            'properties': {
-                'id': {'type': 'integer'},
-                'date': {'type': 'string', 'format': 'date'},
-                'date-default': {
-                    'type': 'string',
-                    'format': 'date',
-                    'default': '2020-01-01',
-                },
+def test_unmarshal_object():
+    schema = {
+        'type': 'object',
+        'properties': {
+            'id': {'type': 'integer'},
+            'date': {'type': 'string', 'format': 'date'},
+            'date-default': {
+                'type': 'string',
+                'format': 'date',
+                'default': '2020-01-01',
             },
-        }
-    )
+        },
+    }
     instance = {'date': '2018-01-02'}
     unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
     assert unmarshaled == {
@@ -106,42 +85,53 @@ def test_unmarshal_object(schema):
     }
 
 
-def test_unmarshal_object_without_properties(schema):
-    schema['type'] = 'object'
+def test_unmarshal_object_without_properties():
+    schema = {'type': 'object'}
     instance = {'date': '2018-01-02'}
     unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
     assert unmarshaled == {}
 
 
-def test_unmarshal_all_of(schema):
-    schema['allOf'] = [
-        {'type': 'object', 'properties': {'id': {'type': 'integer'}}},
-        {
-            'type': 'object',
-            'properties': {'date': {'type': 'string', 'format': 'date'}},
-        },
-    ]
+def test_unmarshal_all_of():
+    schema = {
+        'allOf': [
+            {'type': 'object', 'properties': {'id': {'type': 'integer'}}},
+            {'type': 'object', 'properties': {'date': {'type': 'string'}}},
+            {
+                'type': 'object',
+                'properties': {'date': {'type': 'string', 'format': 'date'}},
+            },
+        ]
+    }
     instance = {'id': 2, 'date': '2018-01-02'}
     unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
     assert unmarshaled == {'id': 2, 'date': datetime.date(2018, 1, 2)}
 
 
+def test_unmarshal_all_of_required_only():
+    schema = {
+        'allOf': [
+            {'type': 'object', 'properties': {'id': {'type': 'integer'}}},
+            {'type': 'object', 'required': [str('id')]},
+        ]
+    }
+    instance = {}
+    with pytest.raises(ValidationError) as exc_info:
+        SchemaUnmarshaler().unmarshal(instance, schema)
+    assert exc_info.value.errors[0].message == "'id' is a required property"
+
+
 @pytest.mark.parametrize('schema_type', ['oneOf', 'anyOf'])
-def test_unmarshal_one_of_or_any_of(schema, schema_type):
-    schema[schema_type] = [
-        {'type': 'integer'},
-        {'type': 'string', 'format': 'date'},
-    ]
+def test_unmarshal_one_of_or_any_of(schema_type):
+    schema = {
+        schema_type: [
+            {'type': 'integer'},
+            {'type': 'string', 'format': 'date'},
+        ]
+    }
     instance = '2018-01-02'
     unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
     assert unmarshaled == datetime.date(2018, 1, 2)
-
-
-def test_unmarshal_without_formats(schema):
-    schema.update({'type': 'string', 'format': 'date'})
-    instance = '2018-01-02'
-    unmarshaled = SchemaUnmarshaler(formats={}).unmarshal(instance, schema)
-    assert unmarshaled == instance
 
 
 @pytest.mark.parametrize(

@@ -21,37 +21,37 @@ class SchemaUnmarshaler(object):
         else:
             self.formats = formats
 
-        self._validator = SchemaValidator(formats=self.formats)
+        self._validate = SchemaValidator(formats=self.formats).validate
         self._unmarshalers = {
             'array': self._unmarshal_array,
             'object': self._unmarshal_object,
         }
 
-    def unmarshal(self, value, schema):
-        self._validator.validate(value, schema)
-        return self._unmarshal(value, schema)
+    def unmarshal(self, instance, schema):
+        """Validate and unmarshal the instance with the schema.
 
-    def _unmarshal(self, value, schema):
-        if value is None:
+        ``self._unmarshal`` can assume the validated instance.
+        """
+        self._validate(instance, schema)
+        return self._unmarshal(instance, schema)
+
+    def _unmarshal(self, instance, schema):
+        if instance is None:
             # Support nullable value
-            return value
+            return instance
 
         if 'allOf' in schema:
-            # `value` should be a dict
-            result = value.copy()  # shallow copy
-            for sub_schema in schema['allOf']:
-                # Each sub schema type should be a object,
-                # and `unmarshaled` should be a dict.
-                #
-                # If multiple sub schemas define same property, latter wins.
-                unmarshaled = self._unmarshal(value, sub_schema)
-                result.update(unmarshaled)
-            return result
+            # If multiple sub schemas define same property latter wins.
+            return {
+                k: v
+                for sub_schema in schema['allOf']
+                for k, v in iteritems(self._unmarshal(instance, sub_schema))
+            }
 
         for sub_schema in schema.get('oneOf') or schema.get('anyOf') or []:
             try:
                 # TODO: Remove duplicate validation
-                return self.unmarshal(value, sub_schema)
+                return self.unmarshal(instance, sub_schema)
             except ValidationError:
                 pass
 
@@ -59,28 +59,36 @@ class SchemaUnmarshaler(object):
             handler = self._unmarshalers[schema['type']]
         except KeyError:
             handler = self._unmarshal_primitive
-        return handler(value, schema)
+        return handler(instance, schema)
 
-    def _unmarshal_array(self, value, schema):
-        return [self._unmarshal(x, schema['items']) for x in value]
+    def _unmarshal_array(self, instance, schema):
+        # ``items`` MUST be present if the ``type`` is ``array``.
+        return [self._unmarshal(x, schema['items']) for x in instance]
 
-    def _unmarshal_object(self, value, schema):
+    def _unmarshal_object(self, instance, schema):
+        try:
+            properties = schema['properties']
+        except KeyError:
+            # Omitting properties keyword has the same behavior as an
+            # empty object.
+            return {}
+
         result = {}
-        if 'properties' in schema:
-            for k, sub_schema in iteritems(schema['properties']):
-                if k in value:
-                    sub_value = value[k]
-                elif 'default' in sub_schema:
-                    sub_value = sub_schema['default']
-                else:
-                    continue  # pragma: no cover
-                result[k] = self._unmarshal(sub_value, sub_schema)
+        for name, sub_schema in iteritems(properties):
+            try:
+                value = instance[name]
+            except KeyError:
+                try:
+                    value = sub_schema['default']
+                except KeyError:
+                    continue
+            result[name] = self._unmarshal(value, sub_schema)
         return result
 
-    def _unmarshal_primitive(self, value, schema):
+    def _unmarshal_primitive(self, instance, schema):
         try:
             modifier = self.formats[schema['type']][schema['format']]
         except KeyError:
-            return value
+            return instance
         else:
-            return modifier(value)
+            return modifier(instance)
