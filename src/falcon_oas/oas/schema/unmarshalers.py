@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import logging
 
 from six import iteritems
+from six import itervalues
 
 from ..exceptions import ValidationError
 from .formats import DEFAULT_FORMATS
@@ -17,11 +18,10 @@ logger = logging.getLogger(__name__)
 class SchemaUnmarshaler(object):
     def __init__(self, formats=None):
         if formats is None:
-            self._formats = DEFAULT_FORMATS
-        else:
-            self._formats = formats
+            formats = DEFAULT_FORMATS
 
-        self._validate = SchemaValidator(formats=self._formats).validate
+        self._formats = _flatten_formats(formats)
+        self._validate = SchemaValidator(formats=formats).validate
         self._unmarshalers = {
             'array': self._unmarshal_array,
             'object': self._unmarshal_object,
@@ -87,8 +87,16 @@ class SchemaUnmarshaler(object):
 
     def _unmarshal_primitive(self, instance, schema):
         try:
-            modifier = self._formats[schema['type']][schema['format']]
+            modifier = self._formats[schema['format']]
         except KeyError:
             return instance
         else:
             return modifier(instance)
+
+
+def _flatten_formats(formats):
+    return {
+        name: modifier
+        for type_formats in itervalues(formats)
+        for name, modifier in iteritems(type_formats)
+    }
