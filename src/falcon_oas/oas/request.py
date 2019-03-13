@@ -21,28 +21,32 @@ else:  # pragma: no cover
 class Request(object):
     @abstractproperty
     def uri_template(self):
-        """The key of Path Item Object following the base path."""
+        """Return the key of Path Item Object with the base path."""
 
     @abstractproperty
     def method(self):
-        """The HTTP method of Operation Object."""
+        """Return the HTTP method of Operation Object."""
 
     @cached_property
     @abc.abstractmethod
     def parameters(self):
-        """The dict of request parameters like:
+        """Return the dict of request parameters.
 
-        {
-            'query': {'page': '1'},
-            'header': {'X-API-Key': 'secret'},
-            'path': {'id': '42'},
-            'cookie': {'session': 'secret'},
-        }
+        Example:
+
+        .. code:: python
+
+            {
+                'query': {'page': '1'},
+                'header': {'X-API-Key': 'secret'},
+                'path': {'id': '42'},
+                'cookie': {'session': 'secret'},
+            }
         """
 
     @abstractproperty
     def media_type(self):
-        """The media type of the request without parameter."""
+        """Return the media type of the request without parameter."""
 
     @abc.abstractmethod
     def get_media(self):

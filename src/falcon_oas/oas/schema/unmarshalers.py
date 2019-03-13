@@ -30,7 +30,7 @@ class SchemaUnmarshaler(object):
     def unmarshal(self, instance, schema):
         """Validate and unmarshal the instance with the schema.
 
-        ``self._unmarshal`` can assume the validated instance.
+        :meth:`~._unmarshal` can assume the validated instance.
         """
         self._validate(instance, schema)
         return self._unmarshal(instance, schema)

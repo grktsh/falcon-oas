@@ -15,7 +15,7 @@ UNMARSHAL_PROBLEM_TYPE_URI = (
 
 
 class _Problem(falcon.HTTPError):
-    """Represents predefined problem type of RFC 7807."""
+    """Represent predefined problem type of RFC 7807."""
 
     def __init__(self, http_error):
         super(_Problem, self).__init__(

@@ -68,13 +68,13 @@ class Spec(object):
 
         Operation Object:
 
-        > If a parameter is already defined at the Path Item, the new
-        > definition will override it but can never remove it.
+            If a parameter is already defined at the Path Item, the new
+            definition will override it but can never remove it.
 
         Path Item Object:
 
-        > These parameters can be overridden at the operation level,
-        > but cannot be removed.
+            These parameters can be overridden at the operation level,
+            but cannot be removed.
         """
         seen = set()
         for spec_dict in (operation, path_item):

@@ -32,7 +32,6 @@ def test_cached_property():
 
         @cached_property
         def called(self):
-            """A docstring"""
             self._called += 1
             return self._called
 
