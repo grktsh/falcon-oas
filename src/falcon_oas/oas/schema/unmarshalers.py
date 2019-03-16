@@ -3,16 +3,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import logging
-
 from six import iteritems
 from six import itervalues
 
 from ..exceptions import ValidationError
 from .formats import DEFAULT_FORMATS
 from .validators import SchemaValidator
-
-logger = logging.getLogger(__name__)
 
 
 class SchemaUnmarshaler(object):
@@ -69,9 +65,11 @@ class SchemaUnmarshaler(object):
         try:
             properties = schema['properties']
         except KeyError:
-            # Omitting properties keyword has the same behavior as an
-            # empty object.
-            return {}
+            properties = {}
+
+        additional_properties = schema.get('additionalProperties')
+        if isinstance(additional_properties, dict):
+            properties = dict(additional_properties, **properties)
 
         result = {}
         for name, sub_schema in iteritems(properties):

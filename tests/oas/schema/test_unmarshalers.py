@@ -85,11 +85,31 @@ def test_unmarshal_object():
     }
 
 
-def test_unmarshal_object_without_properties():
+@pytest.mark.parametrize(
+    'properties,additional_properties,expected',
+    [
+        (None, None, {}),
+        (None, True, {}),
+        (None, {}, {}),
+        (None, {'x': {'type': 'string'}}, {'x': 'foo'}),
+        ({'x': {'type': 'string'}}, None, {'x': 'foo'}),
+        ({'x': {'type': 'string'}}, True, {'x': 'foo'}),
+        ({'x': {'type': 'string'}}, {}, {'x': 'foo'}),
+        ({'x': {'type': 'string'}}, {'x': {'type': 'integer'}}, {'x': 'foo'}),
+    ],
+)
+def test_unmarshal_object_properties_and_additional_properties(
+    properties, additional_properties, expected
+):
     schema = {'type': 'object'}
-    instance = {'date': '2018-01-02'}
+    if properties is not None:
+        schema['properties'] = properties
+    if additional_properties is not None:
+        schema['additionalProperties'] = additional_properties
+
+    instance = {'x': 'foo'}
     unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
-    assert unmarshaled == {}
+    assert unmarshaled == expected
 
 
 def test_unmarshal_all_of():
