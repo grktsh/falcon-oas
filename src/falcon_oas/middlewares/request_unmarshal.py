@@ -3,8 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from ..oas.exceptions import ParametersError
-from ..oas.exceptions import RequestBodyError
 from ..oas.exceptions import UnmarshalError
 from ..oas.parameters.unmarshalers import ParametersUnmarshaler
 from ..oas.request_body import RequestBodyUnmarshaler
@@ -24,32 +22,29 @@ class RequestUnmarshalMiddleware(object):
         if operation is None:
             return
 
-        parameters_error = None
-        request_body_error = None
-
         oas_req = req.context['oas.request']
-        try:
-            parameters = self._unmarshal_parameters(
-                oas_req.parameters, operation['parameters']
-            )
-        except ParametersError as e:
-            parameters_error = e
-        else:
+        parameters, parameter_errors = self._unmarshal_parameters(
+            oas_req.parameters, operation['parameters']
+        )
+        if parameter_errors is None:
             req.context['oas.parameters'] = parameters
             if 'path' in parameters:
                 params.update(parameters['path'])
+        else:
+            for error in parameter_errors:
+                error.schema_path.appendleft('parameters')
 
         if 'requestBody' in operation:
-            try:
-                request_body = self._unmarshal_request_body(
-                    oas_req.get_media,
-                    oas_req.media_type,
-                    operation['requestBody'],
-                )
-            except RequestBodyError as e:
-                request_body_error = e
-            else:
+            request_body, request_body_errors = self._unmarshal_request_body(
+                oas_req.get_media, oas_req.media_type, operation['requestBody']
+            )
+            if request_body_errors is None:
                 req.context['oas.request_body'] = request_body
+            else:
+                for error in request_body_errors:
+                    error.schema_path.appendleft('requestBody')
+        else:
+            request_body_errors = None
 
-        if parameters_error or request_body_error:
-            raise UnmarshalError(parameters_error, request_body_error)
+        if parameter_errors or request_body_errors:
+            raise UnmarshalError(parameter_errors, request_body_errors)

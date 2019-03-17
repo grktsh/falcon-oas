@@ -5,35 +5,40 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import datetime
+from collections import deque
 
+import jsonschema
 import pytest
 
-from falcon_oas.oas.exceptions import ParametersError
 from falcon_oas.oas.parameters.unmarshalers import ParametersUnmarshaler
 from falcon_oas.oas.schema.unmarshalers import SchemaUnmarshaler
 
 
 @pytest.fixture
-def unmarshaler():
-    return ParametersUnmarshaler(SchemaUnmarshaler())
+def unmarshal():
+    return ParametersUnmarshaler(SchemaUnmarshaler()).unmarshal
 
 
-def test_missing(unmarshaler):
+def test_missing(unmarshal):
     values = {}
     parameter_spec_dict_list = [
-        {'name': 'param1', 'in': 'query', 'required': True},
-        {'name': 'param2', 'in': 'query', 'required': True},
-        {'name': 'param3', 'in': 'query'},
+        {'name': str('p1'), 'in': str('query'), 'required': True},
+        {'name': 'p2', 'in': 'query'},
     ]
-    with pytest.raises(ParametersError) as exc_info:
-        unmarshaler.unmarshal(values, parameter_spec_dict_list)
 
-    assert len(exc_info.value.errors) == 2
-    assert exc_info.value.errors[0].name == 'param1'
-    assert exc_info.value.errors[1].name == 'param2'
+    _, errors = unmarshal(values, parameter_spec_dict_list)
+
+    assert len(errors) == 1
+    assert isinstance(errors[0], jsonschema.ValidationError)
+    assert errors[0].message == "'p1' is a required in 'query' parameter"
+    assert errors[0].validator == 'required'
+    assert errors[0].validator_value is True
+    assert errors[0].schema == parameter_spec_dict_list[0]
+    assert errors[0].schema_path == deque([0, 'required'])
+    assert errors[0].path == deque(['query', 'p1'])
 
 
-def test_default(unmarshaler):
+def test_default(unmarshal):
     values = {}
     parameter_spec_dict_list = [
         {'name': 'param1', 'in': 'query', 'schema': {'default': 123}},
@@ -44,20 +49,22 @@ def test_default(unmarshaler):
             'schema': {'default': 'x'},
         },
     ]
-    unmarshaled = unmarshaler.unmarshal(values, parameter_spec_dict_list)
+    unmarshaled, errors = unmarshal(values, parameter_spec_dict_list)
 
     assert unmarshaled == {'query': {'param1': 123, 'param2': 'x'}}
+    assert errors is None
 
 
-def test_undocumented_schema(unmarshaler):
+def test_undocumented_schema(unmarshal):
     values = {'query': {'param1': 'foo'}}
     parameter_spec_dict_list = [{'name': 'param1', 'in': 'query'}]
-    unmarshaled = unmarshaler.unmarshal(values, parameter_spec_dict_list)
+    unmarshaled, errors = unmarshal(values, parameter_spec_dict_list)
 
     assert unmarshaled == values
+    assert errors is None
 
 
-def test_unmarshal_success(unmarshaler):
+def test_unmarshal_success(unmarshal):
     values = {'query': {'param1': '2018-01-02'}}
     parameter_spec_dict_list = [
         {
@@ -66,22 +73,29 @@ def test_unmarshal_success(unmarshaler):
             'schema': {'type': 'string', 'format': 'date'},
         }
     ]
-    unmarshaled = unmarshaler.unmarshal(values, parameter_spec_dict_list)
+    unmarshaled, errors = unmarshal(values, parameter_spec_dict_list)
 
     assert unmarshaled == {'query': {'param1': datetime.date(2018, 1, 2)}}
+    assert errors is None
 
 
-def test_unmarshal_error(unmarshaler):
-    values = {'query': {'param1': str('2018/01/02')}}
+def test_unmarshal_error(unmarshal):
+    values = {'query': {'p1': str('2018/01/02')}}
     parameter_spec_dict_list = [
         {
-            'name': 'param1',
+            'name': 'p1',
             'in': 'query',
             'schema': {'type': 'string', 'format': str('date')},
         }
     ]
-    with pytest.raises(ParametersError) as exc_info:
-        unmarshaler.unmarshal(values, parameter_spec_dict_list)
+    _, errors = unmarshal(values, parameter_spec_dict_list)
 
-    errors = exc_info.value.errors
-    assert errors[0].errors[0].message == "'2018/01/02' is not a 'date'"
+    assert len(errors) == 1
+    assert isinstance(errors[0], jsonschema.ValidationError)
+    assert errors[0].message == "'2018/01/02' is not a 'date'"
+    assert errors[0].validator == 'format'
+    assert errors[0].validator_value == 'date'
+    assert errors[0].instance == '2018/01/02'
+    assert errors[0].schema == {'type': 'string', 'format': str('date')}
+    assert errors[0].schema_path == deque([0, 'schema', 'format'])
+    assert errors[0].path == deque(['query', 'p1'])

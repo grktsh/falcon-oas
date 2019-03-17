@@ -5,8 +5,8 @@ from __future__ import unicode_literals
 
 import logging
 
-from .exceptions import MissingRequestBody
-from .exceptions import RequestBodyError
+import jsonschema
+
 from .exceptions import ValidationError
 from .utils import pretty_json
 
@@ -28,9 +28,16 @@ class RequestBodyUnmarshaler(object):
                 exc_info=True,
             )
             if request_body_spec_dict.get('required', False):
-                raise MissingRequestBody(media_type)
+                error = jsonschema.ValidationError(
+                    'Request body is required',
+                    validator='required',
+                    validator_value=True,
+                    schema=request_body_spec_dict,
+                    schema_path=('required',),
+                )
+                return None, [error]
             # Should return unique object instead of None?
-            return None
+            return None, None
 
         # TODO: Obscure confidential data
         logger.info(
@@ -39,7 +46,7 @@ class RequestBodyUnmarshaler(object):
 
         media_type_spec_dict = request_body_spec_dict['content'][media_type]
         try:
-            return self._unmarshal(value, media_type_spec_dict)
+            unmarshaled = self._unmarshal(value, media_type_spec_dict)
         except ValidationError as e:
             logger.warning(
                 'Failed to unmarshal request body %s with %s',
@@ -47,7 +54,11 @@ class RequestBodyUnmarshaler(object):
                 pretty_json(media_type_spec_dict),
                 exc_info=True,
             )
-            raise RequestBodyError(e.errors)
+            for error in e.errors:
+                error.schema_path.extendleft(['schema', media_type, 'content'])
+            return None, e.errors
+        else:
+            return unmarshaled, None
 
     def _unmarshal(self, value, media_type_spec_dict):
         try:

@@ -5,10 +5,10 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import falcon
+import jsonschema
 import pytest
 from falcon import testing
 
-from falcon_oas.oas.exceptions import MissingRequestBody
 from falcon_oas.oas.exceptions import UnmarshalError
 from falcon_oas.problems import _Problem
 from falcon_oas.problems import http_error_handler
@@ -44,7 +44,11 @@ def test_problem_to_dict_without_description():
 
 def test_unmarshal_problem():
     unmarshal_error = UnmarshalError(
-        request_body_error=MissingRequestBody('application/json')
+        request_body_errors=[
+            jsonschema.ValidationError(
+                'Request body is required', validator='required'
+            )
+        ]
     )
     problem = UnmarshalProblem(unmarshal_error)
 
@@ -56,7 +60,7 @@ def test_unmarshal_problem():
             {
                 'path': [],
                 'validator': 'required',
-                'message': 'request body is required',
+                'message': 'Request body is required',
             }
         ],
     }
@@ -108,9 +112,7 @@ def test_http_error_handler():
 
 
 def test_validation_error_handler():
-    unmarshal_error = UnmarshalError(
-        request_body_error=MissingRequestBody('application/json')
-    )
+    unmarshal_error = UnmarshalError()
     req = falcon.Request(testing.create_environ())
     resp = falcon.Response()
     params = {}

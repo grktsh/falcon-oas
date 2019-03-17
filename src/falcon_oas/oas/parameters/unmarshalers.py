@@ -6,9 +6,8 @@ from __future__ import unicode_literals
 import logging
 from collections import defaultdict
 
-from ..exceptions import MissingParameter
-from ..exceptions import ParameterError
-from ..exceptions import ParametersError
+import jsonschema
+
 from ..exceptions import ValidationError
 from ..utils import pretty_json
 from .deserializers import deserialize_parameter
@@ -20,7 +19,7 @@ class ParametersUnmarshaler(object):
     def __init__(self, schema_unmarshaler):
         self._unmarshal_schema = schema_unmarshaler.unmarshal
 
-    def unmarshal(self, values, parameters):
+    def unmarshal(self, values, parameter_spec_dicts):
         non_confidential_values = {
             'query': values.get('query'),
             'path': values.get('path'),
@@ -32,7 +31,7 @@ class ParametersUnmarshaler(object):
         unmarshaled = defaultdict(dict)
         errors = []
 
-        for parameter_spec_dict in parameters:
+        for index, parameter_spec_dict in enumerate(parameter_spec_dicts):
             name = parameter_spec_dict['name']
             location = parameter_spec_dict['in']
             schema = parameter_spec_dict.get('schema', {})
@@ -44,7 +43,17 @@ class ParametersUnmarshaler(object):
                     logger.warning(
                         'Missing parameter %r in %r', name, location
                     )
-                    errors.append(MissingParameter(name, location))
+                    error = jsonschema.ValidationError(
+                        '{!r} is a required in {!r} parameter'.format(
+                            name, location
+                        ),
+                        validator='required',
+                        validator_value=True,
+                        schema=parameter_spec_dict,
+                        schema_path=(index, 'required'),
+                        path=(location, name),
+                    )
+                    errors.append(error)
             else:
                 try:
                     value = self._unmarshal(value, schema)
@@ -55,13 +64,14 @@ class ParametersUnmarshaler(object):
                         pretty_json(schema),
                         exc_info=True,
                     )
-                    errors.append(ParameterError(name, location, e.errors))
+                    for error in e.errors:
+                        error.schema_path.extendleft(('schema', index))
+                        error.path.extendleft([name, location])
+                    errors.extend(e.errors)
                 else:
                     unmarshaled[location][name] = value
 
-        if errors:
-            raise ParametersError(errors)
-        return unmarshaled
+        return unmarshaled, errors or None
 
     def _unmarshal(self, value, schema):
         value = deserialize_parameter(value, schema)

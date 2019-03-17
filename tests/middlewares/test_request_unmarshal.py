@@ -4,6 +4,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from collections import deque
+
 import falcon
 import pytest
 from falcon import testing
@@ -155,6 +157,7 @@ def test_errors(resource):
                 in: query
                 schema:
                   type: integer
+                required: true
               requestBody:
                 content:
                   application/json:
@@ -169,15 +172,20 @@ def test_errors(resource):
     with pytest.raises(UnmarshalError) as exc_info:
         client.simulate_post(
             path='/path',
-            query_string=str('p1=a&p2=b'),
+            query_string=str('p1=a'),
             headers={'Content-Type': str('application/json')},
             body='3',
         )
 
-    errors = exc_info.value.parameters_error.errors
-    assert errors[0].errors[0].message == "'a' is not of type 'integer'"
-    assert errors[1].errors[0].message == "'b' is not of type 'integer'"
-    errors = exc_info.value.request_body_error.errors
+    errors = exc_info.value.parameter_errors
+    assert errors[0].message == "'a' is not of type 'integer'"
+    assert errors[0].schema_path == deque(['parameters', 0, 'schema', 'type'])
+    assert errors[1].message == "'p2' is a required in 'query' parameter"
+    assert errors[1].schema_path == deque(['parameters', 1, 'required'])
+    errors = exc_info.value.request_body_errors
     assert errors[0].message == "3 is not of type 'string'"
+    assert errors[0].schema_path == deque(
+        ['requestBody', 'content', 'application/json', 'schema', 'type']
+    )
 
     assert resource.called is False
