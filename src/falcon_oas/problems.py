@@ -10,7 +10,7 @@ UNMARSHAL_PROBLEM_VERSION = '0.3.0'
 UNMARSHAL_PROBLEM_TYPE_URI = (
     'https://pypi.org/project/falcon-oas/'
     + UNMARSHAL_PROBLEM_VERSION
-    + '/#unmarshal-problem'
+    + '/#unmarshal-error'
 )
 
 

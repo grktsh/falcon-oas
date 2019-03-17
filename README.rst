@@ -18,50 +18,43 @@ Problems
 
 Media Type: ``application/problem+json`` only
 
-Unmarshal Problem
-~~~~~~~~~~~~~~~~~
+Unmarshal Error
+~~~~~~~~~~~~~~~
 
 HTTP status code: 400
 
-- ``"type"``: ``"https://pypi.org/project/falcon-oas/0.3.0/#unmarshal-problem"``
+- ``"type"``: ``"https://pypi.org/project/falcon-oas/0.3.0/#unmarshal-error"``
 - ``"title"``: ``"Unmarshal Error"``
 - ``"status"``: ``400``
+- ``"parameters"``: (optional) The array of parameter error objects
 - ``"request_body"``: (optional) The array of request body error objects
-- ``"parameters"``: (optional) The object with key of ``"query"``, ``"header"``, ``"path"`` or ``"cookie"``, whose value is the array of parameter error objects
 
-The request body error object has the following members from ``jsonschema.exceptions.ValidationError``:
+The parameter error object and the request body error object have the following members from ``jsonschema.ValidationError``:
 
 - ``"path"``: The path to the offending element within the instance
 - ``"validator"``: The name of the failed validator
 - ``"message"``: A human readable message explaining the error
-
-The parameter error object also has the member ``"name"``:
-
-- ``"name"``: The name of the parameter
 
 Example:
 
 .. code:: json
 
     {
-      "type": "https://pypi.org/project/falcon-oas/0.3.0/#unmarshal-problem",
+      "type": "https://pypi.org/project/falcon-oas/0.3.0/#unmarshal-error",
       "title": "Unmarshal Error",
       "status": 400,
+      "parameters": [
+        {
+          "path": ["path", "pet_id"],
+          "validator": "type",
+          "message": "'me' is not of type 'integer'"
+        }
+      ],
       "request_body": [
         {
           "path": ["name"],
           "validator": "type",
           "message": "42 is not of type 'string'"
         }
-      ],
-      "parameters": {
-        "path": [
-          {
-            "name": "pet_id",
-            "path": [],
-            "validator": "type",
-            "message": "'me' is not of type 'integer'"
-          }
-        ]
-      }
+      ]
     }

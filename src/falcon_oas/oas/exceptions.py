@@ -30,14 +30,10 @@ class UnmarshalError(Error):
         obj = obj_type()
 
         if self.parameter_errors is not None:
-            parameters = obj_type()
-            for error in self.parameter_errors:
-                location = error.path[0]
-                name = error.path[1]
-                error_dict = _error_to_dict(error, obj_type, name=name)
-                parameters.setdefault(location, [])
-                parameters[location].append(error_dict)
-            obj['parameters'] = parameters
+            obj['parameters'] = [
+                _error_to_dict(error, obj_type)
+                for error in self.parameter_errors
+            ]
 
         if self.request_body_errors is not None:
             obj['request_body'] = [
@@ -48,10 +44,9 @@ class UnmarshalError(Error):
         return obj
 
 
-def _error_to_dict(error, obj_type, **kwargs):
+def _error_to_dict(error, obj_type):
     obj = obj_type()
     obj['path'] = list(error.path)
     obj['validator'] = error.validator
     obj['message'] = error.message
-    obj.update(**kwargs)
     return obj

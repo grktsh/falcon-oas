@@ -30,24 +30,18 @@ def test_unmarshal_error():
         ],
     )
     assert error.to_dict() == {
-        'parameters': {
-            'path': [
-                {
-                    'name': 'p1',
-                    'path': ['path', 'p1'],
-                    'validator': 'required',
-                    'message': "'p1' is a required in 'query' parameter",
-                }
-            ],
-            'query': [
-                {
-                    'name': 'p2',
-                    'path': ['query', 'p2'],
-                    'validator': 'type',
-                    'message': "'123' is not of type 'integer'",
-                }
-            ],
-        },
+        'parameters': [
+            {
+                'path': ['path', 'p1'],
+                'validator': 'required',
+                'message': "'p1' is a required in 'query' parameter",
+            },
+            {
+                'path': ['query', 'p2'],
+                'validator': 'type',
+                'message': "'123' is not of type 'integer'",
+            },
+        ],
         'request_body': [
             {
                 'path': [],
