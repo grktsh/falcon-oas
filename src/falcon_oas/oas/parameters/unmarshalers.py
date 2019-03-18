@@ -34,10 +34,11 @@ class ParametersUnmarshaler(object):
         for index, parameter_spec_dict in enumerate(parameter_spec_dicts):
             name = parameter_spec_dict['name']
             location = parameter_spec_dict['in']
-            schema = parameter_spec_dict.get('schema', {})
 
             try:
-                value = self._get_value(values, location, name, schema)
+                value, schema = deserialize_parameter(
+                    values, location, name, parameter_spec_dict
+                )
             except KeyError:
                 if parameter_spec_dict.get('required', False):
                     logger.warning(
@@ -56,7 +57,7 @@ class ParametersUnmarshaler(object):
                     errors.append(error)
             else:
                 try:
-                    value = self._unmarshal(value, schema)
+                    value = self._unmarshal_schema(value, schema)
                 except ValidationError as e:
                     logger.warning(
                         'Failed to unmarshal parameter %s with %s',
@@ -72,15 +73,3 @@ class ParametersUnmarshaler(object):
                     unmarshaled[location][name] = value
 
         return unmarshaled, errors or None
-
-    def _unmarshal(self, value, schema):
-        value = deserialize_parameter(value, schema)
-        value = self._unmarshal_schema(value, schema)
-        return value
-
-    def _get_value(self, values, location, name, schema):
-        try:
-            return values[location][name]
-        except KeyError:
-            # TODO: Support allOf, anyOf and oneOf
-            return schema['default']

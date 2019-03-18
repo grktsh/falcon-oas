@@ -3,12 +3,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import logging
 from distutils.util import strtobool
 
-logger = logging.getLogger(__name__)
-
-_parameter_deserializers = {
+_parsers = {
     'integer': int,
     'number': float,
     'boolean': strtobool,
@@ -16,21 +13,23 @@ _parameter_deserializers = {
 }
 
 
-def deserialize_parameter(value, schema):
+# TODO: Support style and explode
+def deserialize_parameter(parameters, location, name, parameter_spec_dict):
     try:
+        value = parameters[location][name]
+    except KeyError:
+        schema = parameter_spec_dict['schema']
+        return schema['default'], schema
+
+    try:
+        schema = parameter_spec_dict['schema']
         schema_type = schema['type']
     except KeyError:
-        logger.warning('Missing parameter schema type')
-        return value
+        return value, {}
 
     try:
-        deserialize = _parameter_deserializers[schema_type]
-    except KeyError:
-        logger.warning('Unsupported parameter schema type: %r', schema_type)
-        return value
-
-    try:
-        return deserialize(value)
-    except ValueError:
-        # Let the validator to handle the type error
-        return value
+        parser = _parsers[schema_type]
+        return parser(value), schema
+    except (KeyError, ValueError):
+        # Let the validator handle the error
+        return value, schema

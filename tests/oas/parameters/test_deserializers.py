@@ -8,8 +8,50 @@ import pytest
 from falcon_oas.oas.parameters.deserializers import deserialize_parameter
 
 
+@pytest.mark.parametrize('parameters', [{}, {'query': {}}])
+def test_deserialize_parameter_default(parameters):
+    location = 'query'
+    name = 'p'
+    parameter_spec_dict = {'schema': {'default': 42}}
+
+    result = deserialize_parameter(
+        parameters, location, name, parameter_spec_dict
+    )
+    assert result == (42, parameter_spec_dict['schema'])
+
+
+@pytest.mark.parametrize('parameter_spec_dict', [{}, {'schema': {}}])
+def test_deserialize_parameter_no_default(parameter_spec_dict):
+    location = 'query'
+    name = 'p'
+    parameters = {}
+
+    pytest.raises(
+        KeyError,
+        deserialize_parameter,
+        parameters,
+        location,
+        name,
+        parameter_spec_dict,
+    )
+
+
 @pytest.mark.parametrize(
-    'value,schema_type,expected',
+    'value,parameter_spec_dict', [('2', {}), ('2', {'schema': {}})]
+)
+def test_deserialize_parameter_no_schema_or_type(value, parameter_spec_dict):
+    location = 'query'
+    name = 'p'
+    parameters = {location: {name: value}}
+
+    result = deserialize_parameter(
+        parameters, location, name, parameter_spec_dict
+    )
+    assert result == (value, {})
+
+
+@pytest.mark.parametrize(
+    'value,schema_type,expected_value',
     [
         ('2', 'integer', 2),
         ('2.3', 'number', 2.3),
@@ -25,21 +67,39 @@ from falcon_oas.oas.parameters.deserializers import deserialize_parameter
         ('x', 'string', 'x'),
     ],
 )
-def test_deserialize_parameter(value, schema_type, expected):
-    assert deserialize_parameter(value, {'type': schema_type}) == expected
+def test_deserialize_parameter_parse_success(
+    value, schema_type, expected_value
+):
+    location = 'query'
+    name = 'p'
+    parameters = {location: {name: value}}
+    parameter_spec_dict = {'schema': {'type': schema_type}}
+
+    result = deserialize_parameter(
+        parameters, location, name, parameter_spec_dict
+    )
+    assert result == (expected_value, parameter_spec_dict['schema'])
 
 
 @pytest.mark.parametrize(
-    'value,schema_type,expected',
+    'value,schema_type',
     [
-        ('x', 'integer', 'x'),
-        ('2.3', 'integer', '2.3'),
-        ('x', 'number', 'x'),
-        ('2', 'boolean', '2'),
-        ('x', 'boolean', 'x'),
-        ('{}', 'object', '{}'),  # Unsupported
-        ('[]', 'array', '[]'),  # Unsupported
+        ('x', 'integer'),
+        ('2.3', 'integer'),
+        ('x', 'number'),
+        ('2', 'boolean'),
+        ('x', 'boolean'),
+        ('{}', 'object'),  # Unsupported yet
+        ('[]', 'array'),  # Unsupported yet
     ],
 )
-def test_deserialize_parameter_errors(value, schema_type, expected):
-    assert deserialize_parameter(value, {'type': schema_type}) == expected
+def test_deserialize_parameter_parse_error(value, schema_type):
+    location = 'query'
+    name = 'p'
+    parameters = {location: {name: value}}
+    parameter_spec_dict = {'schema': {'type': schema_type}}
+
+    result = deserialize_parameter(
+        parameters, location, name, parameter_spec_dict
+    )
+    assert result == (value, parameter_spec_dict['schema'])
