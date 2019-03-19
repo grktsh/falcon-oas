@@ -48,12 +48,6 @@ class RequestBodyUnmarshaler(object):
         try:
             unmarshaled = self._unmarshal(value, media_type_spec_dict)
         except ValidationError as e:
-            logger.warning(
-                'Failed to unmarshal request body %s with %s',
-                pretty_json(value),
-                pretty_json(media_type_spec_dict),
-                exc_info=True,
-            )
             for error in e.errors:
                 error.schema_path.extendleft(['schema', media_type, 'content'])
             return None, e.errors

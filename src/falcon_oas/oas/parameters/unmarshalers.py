@@ -41,9 +41,6 @@ class ParametersUnmarshaler(object):
                 )
             except KeyError:
                 if parameter_spec_dict.get('required', False):
-                    logger.warning(
-                        'Missing parameter %r in %r', name, location
-                    )
                     error = jsonschema.ValidationError(
                         '{!r} is a required in {!r} parameter'.format(
                             name, location
@@ -59,12 +56,6 @@ class ParametersUnmarshaler(object):
                 try:
                     value = self._unmarshal_schema(value, schema)
                 except ValidationError as e:
-                    logger.warning(
-                        'Failed to unmarshal parameter %s with %s',
-                        pretty_json(value),
-                        pretty_json(schema),
-                        exc_info=True,
-                    )
                     for error in e.errors:
                         error.schema_path.extendleft(('schema', index))
                         error.path.extendleft([name, location])
