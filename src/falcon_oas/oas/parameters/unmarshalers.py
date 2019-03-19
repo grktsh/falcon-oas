@@ -9,7 +9,6 @@ from collections import defaultdict
 import jsonschema
 
 from ..exceptions import ValidationError
-from ..utils import pretty_json
 from .deserializers import deserialize_parameter
 
 logger = logging.getLogger(__name__)
@@ -24,9 +23,7 @@ class ParametersUnmarshaler(object):
             'query': values.get('query'),
             'path': values.get('path'),
         }
-        logger.info(
-            'Request parameters: %s', pretty_json(non_confidential_values)
-        )
+        logger.info('Request parameters: %r', non_confidential_values)
 
         unmarshaled = defaultdict(dict)
         errors = []

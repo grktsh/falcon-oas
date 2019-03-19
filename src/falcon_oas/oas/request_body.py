@@ -8,7 +8,6 @@ import logging
 import jsonschema
 
 from .exceptions import ValidationError
-from .utils import pretty_json
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +39,7 @@ class RequestBodyUnmarshaler(object):
             return None, None
 
         # TODO: Obscure confidential data
-        logger.info(
-            'Media type: %s, request body: %s', media_type, pretty_json(value)
-        )
+        logger.info('Media type: %r, request body: %r', media_type, value)
 
         media_type_spec_dict = request_body_spec_dict['content'][media_type]
         try:
