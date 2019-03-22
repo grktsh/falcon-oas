@@ -5,14 +5,14 @@ from __future__ import unicode_literals
 
 from six import iteritems
 
-from .extensions import FALCON_OAS_IMPLEMENTOR
+from . import extensions
 from .utils import import_string
 
 
 def generate_routes(spec, base_module=''):
     for path, path_item in iteritems(spec.spec_dict['paths']):
         try:
-            resource_name = path_item[FALCON_OAS_IMPLEMENTOR]
+            resource_name = path_item[extensions.IMPLEMENTATION]
         except KeyError:
             pass
         else:

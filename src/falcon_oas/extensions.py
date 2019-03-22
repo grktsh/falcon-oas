@@ -4,7 +4,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-#: ``x-falcon-oas-implementor`` associates Path Item Object and
+#: ``x-falcon-oas-implementation`` associates Path Item Object and
 #: Security Scheme Object to implementations respectively.
 #:
 #: Path Item Object can be associated to Falcon resource class:
@@ -12,7 +12,7 @@ from __future__ import unicode_literals
 #: .. code:: yaml
 #:
 #:     /v1/pets:
-#:       x-falcon-oas-implementor: api.v1.pets.Collection
+#:       x-falcon-oas-implementation: api.v1.pets.Collection
 #:       get:
 #:         responses:
 #:           '200':
@@ -33,7 +33,7 @@ from __future__ import unicode_literals
 #:
 #: .. code:: yaml
 #:
-#:     x-falcon-oas-implementor: auth.session_cookie_loader
+#:     x-falcon-oas-implementation: auth.session_cookie_loader
 #:     type: apiKey
 #:     name: session
 #:     in: cookie
@@ -56,4 +56,4 @@ from __future__ import unicode_literals
 #:
 #: Falsy value
 #:     Deny the access.  403 Forbidden is raised.
-FALCON_OAS_IMPLEMENTOR = 'x-falcon-oas-implementor'
+IMPLEMENTATION = 'x-falcon-oas-implementation'

@@ -8,7 +8,7 @@ import logging
 import falcon
 from six import iteritems
 
-from ..extensions import FALCON_OAS_IMPLEMENTOR
+from .. import extensions
 from ..utils import import_string
 
 logger = logging.getLogger(__name__)
@@ -60,8 +60,8 @@ class SecurityMiddleware(object):
         try:
             security_scheme, satisfy = self._security_schemes[name]
         except KeyError:
-            # When ``FALCON_OAS_IMPLEMENTOR`` is not specified, KeyError
-            # is raised.
+            # When ``extensions.IMPLEMENTATION`` is not specified,
+            # KeyError is raised.
             return True
 
         if security_scheme['type'] == 'apiKey':
@@ -82,10 +82,10 @@ def get_security_schemes(spec, base_module=''):
         key: (
             security_scheme,
             import_string(
-                security_scheme[FALCON_OAS_IMPLEMENTOR],
+                security_scheme[extensions.IMPLEMENTATION],
                 base_module=base_module,
             ),
         )
         for key, security_scheme in iteritems(security_schemes)
-        if FALCON_OAS_IMPLEMENTOR in security_scheme
+        if extensions.IMPLEMENTATION in security_scheme
     }

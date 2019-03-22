@@ -8,7 +8,7 @@ import falcon
 import pytest
 from falcon import testing
 
-from falcon_oas.extensions import FALCON_OAS_IMPLEMENTOR
+from falcon_oas import extensions
 from falcon_oas.factories import OAS
 from falcon_oas.oas.exceptions import UnmarshalError
 from tests.helpers import yaml_load_dedent
@@ -40,7 +40,7 @@ spec_dict = yaml_load_dedent(
           in: header
           {0}: test_factories.api_key_loader
     """.format(
-        FALCON_OAS_IMPLEMENTOR
+        extensions.IMPLEMENTATION
     )
 )
 
