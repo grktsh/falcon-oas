@@ -62,8 +62,9 @@ def _create_format_checker_from_formats(formats=None):
 
 
 def _to_checker(schema_type, validator):
+    types = _primitive_types[schema_type]
+
     def checker(instance):
-        types = _primitive_types[schema_type]
         if not isinstance(instance, types):
             # Let type validator handle the type error
             return True
