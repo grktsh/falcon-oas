@@ -7,8 +7,6 @@ import abc
 
 import six
 
-from ..utils import cached_property
-
 if six.PY2:  # pragma: no cover
     abstractproperty = abc.abstractproperty
 else:  # pragma: no cover
@@ -18,7 +16,41 @@ else:  # pragma: no cover
 
 
 @six.add_metaclass(abc.ABCMeta)
-class Request(object):
+class RequestParameters(object):
+    @abstractproperty
+    def path(self):
+        """Return the path parameters."""
+
+    @abstractproperty
+    def query(self):
+        """Return the query parameters."""
+
+    @abstractproperty
+    def header(self):
+        """Return the header parameters."""
+
+    @abstractproperty
+    def cookie(self):
+        """Return the header parameters."""
+
+
+@six.add_metaclass(abc.ABCMeta)
+class RequestBody(object):
+    @abstractproperty
+    def content_length(self):
+        """Return the content length."""
+
+    @abstractproperty
+    def media_type(self):
+        """Return the media type of the request without parameter."""
+
+    @abstractproperty
+    def media(self):
+        """Return deserialized request body."""
+
+
+@six.add_metaclass(abc.ABCMeta)
+class Request(RequestParameters, RequestBody):
     @abstractproperty
     def uri_template(self):
         """Return the key of Path Item Object with the base path."""
@@ -26,28 +58,3 @@ class Request(object):
     @abstractproperty
     def method(self):
         """Return the HTTP method of Operation Object."""
-
-    @cached_property
-    @abc.abstractmethod
-    def parameters(self):
-        """Return the dict of request parameters.
-
-        Example:
-
-        .. code:: python
-
-            {
-                'query': {'page': '1'},
-                'header': {'X-API-Key': 'secret'},
-                'path': {'id': '42'},
-                'cookie': {'session': 'secret'},
-            }
-        """
-
-    @abstractproperty
-    def media_type(self):
-        """Return the media type of the request without parameter."""
-
-    @abc.abstractmethod
-    def get_media(self):
-        """Return deserialized request body."""

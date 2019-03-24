@@ -16,8 +16,8 @@ _parsers = {
 # TODO: Support style and explode
 def deserialize_parameter(parameters, location, name, parameter_spec_dict):
     try:
-        value = parameters[location][name]
-    except KeyError:
+        value = getattr(parameters, location)[name]
+    except (AttributeError, KeyError):
         schema = parameter_spec_dict['schema']
         return schema['default'], schema
 

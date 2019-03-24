@@ -16,16 +16,8 @@ class RequestBodyUnmarshaler(object):
     def __init__(self, schema_unmarshaler):
         self._unmarshal_schema = schema_unmarshaler.unmarshal
 
-    def unmarshal(self, get_value, media_type, request_body_spec_dict):
-        try:
-            value = get_value()
-        except ValueError:
-            # TODO: distinguish deserialization error from empty body error
-            logger.warning(
-                'Request body is empty or corrupted for media type: %s',
-                media_type,
-                exc_info=True,
-            )
+    def unmarshal(self, request_body, request_body_spec_dict):
+        if not request_body.content_length:
             if request_body_spec_dict.get('required', False):
                 error = jsonschema.ValidationError(
                     'Request body is required',
@@ -35,15 +27,18 @@ class RequestBodyUnmarshaler(object):
                     schema_path=('required',),
                 )
                 return None, [error]
-            # Should return unique object instead of None?
             return None, None
 
+        # TODO: Let the validator handle the media error
+        media = request_body.media
+        media_type = request_body.media_type
+
         # TODO: Obscure confidential data
-        logger.info('Media type: %r, request body: %r', media_type, value)
+        logger.info('Media type: %r, request body: %r', media_type, media)
 
         media_type_spec_dict = request_body_spec_dict['content'][media_type]
         try:
-            unmarshaled = self._unmarshal(value, media_type_spec_dict)
+            unmarshaled = self._unmarshal(media, media_type_spec_dict)
         except ValidationError as e:
             for error in e.errors:
                 error.schema_path.extendleft(['schema', media_type, 'content'])

@@ -37,17 +37,25 @@ def req():
     return _RequestAdapter(req, {'id': '42'})
 
 
-def test_request_adapter(req):
+def test_request_adapter(mocker, req):
     assert req.uri_template == '/users/{id}'
     assert req.method == 'get'
-    assert req.parameters['query'] == {'page': '1'}
-    assert req.parameters['header']['x-api-key'] == 'secret-key'
-    assert req.parameters['path'] == {'id': '42'}
-    assert req.parameters['cookie'] == {'session': 'secret'}
+    assert req.path == {'id': '42'}
+    assert req.query == {'page': '1'}
+    assert req.header['x-api-key'] == 'secret-key'
+    assert req.cookie == {'session': 'secret'}
+    assert req.content_length == len('{"foo": "bar"}')
     assert req.media_type == 'application/json'
-    assert req.get_media() == {'foo': 'bar'}
+    assert req.media == {'foo': 'bar'}
 
-    pytest.raises(KeyError, lambda: req.parameters['header']['unknown'])
+    with pytest.raises(KeyError):
+        req.header['unknown']
+
+    with pytest.raises(falcon.HTTPBadRequest):
+        falcon_req = mocker.MagicMock()
+        type(falcon_req).media = mocker.PropertyMock(side_effect=ValueError)
+        req = _RequestAdapter(falcon_req, {})
+        req.media
 
 
 def test_undocumented_media_type(resource):
@@ -103,12 +111,9 @@ def test_documented_request(resource):
 
     req = resource.captured_req
     assert req.context['oas.operation'] is not None
-    assert req.context['oas.request'].parameters['query'] == {
-        'q': '3',
-        'r': ['5', '7'],
-    }
-    assert req.context['oas.request'].parameters['header']['X-Key'] == 'key'
-    assert req.context['oas.request'].parameters['path'] == {'id': '2'}
-    assert req.context['oas.request'].parameters['cookie'] == {'x': '5'}
+    assert req.context['oas.request'].query == {'q': '3', 'r': ['5', '7']}
+    assert req.context['oas.request'].header['X-Key'] == 'key'
+    assert req.context['oas.request'].path == {'id': '2'}
+    assert req.context['oas.request'].cookie == {'x': '5'}
     assert req.context['oas.request'].media_type == 'application/json'
-    assert req.context['oas.request'].get_media() == 'foo'
+    assert req.context['oas.request'].media == 'foo'

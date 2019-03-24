@@ -67,7 +67,7 @@ class SecurityMiddleware(object):
         if security_scheme['type'] == 'apiKey':
             location = security_scheme['in']
             name = security_scheme['name']
-            value = oas_req.parameters[location].get(name)
+            value = getattr(oas_req, location).get(name)
             return satisfy(value, scopes, oas_req)
 
         logger.warning(

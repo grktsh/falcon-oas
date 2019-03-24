@@ -8,10 +8,10 @@ import pytest
 from falcon_oas.oas.parameters.deserializers import deserialize_parameter
 
 
-@pytest.mark.parametrize('parameters', [{}, {'query': {}}])
-def test_deserialize_parameter_default(parameters):
+def test_deserialize_parameter_default(mocker):
     location = 'query'
     name = 'p'
+    parameters = mocker.MagicMock(**{location: {}})
     parameter_spec_dict = {'schema': {'default': 42}}
 
     result = deserialize_parameter(
@@ -21,10 +21,10 @@ def test_deserialize_parameter_default(parameters):
 
 
 @pytest.mark.parametrize('parameter_spec_dict', [{}, {'schema': {}}])
-def test_deserialize_parameter_no_default(parameter_spec_dict):
+def test_deserialize_parameter_no_default(mocker, parameter_spec_dict):
     location = 'query'
     name = 'p'
-    parameters = {}
+    parameters = mocker.MagicMock(**{location: {}})
 
     pytest.raises(
         KeyError,
@@ -39,10 +39,12 @@ def test_deserialize_parameter_no_default(parameter_spec_dict):
 @pytest.mark.parametrize(
     'value,parameter_spec_dict', [('2', {}), ('2', {'schema': {}})]
 )
-def test_deserialize_parameter_no_schema_or_type(value, parameter_spec_dict):
+def test_deserialize_parameter_no_schema_or_type(
+    mocker, value, parameter_spec_dict
+):
     location = 'query'
     name = 'p'
-    parameters = {location: {name: value}}
+    parameters = mocker.MagicMock(**{location: {name: value}})
 
     result = deserialize_parameter(
         parameters, location, name, parameter_spec_dict
@@ -68,11 +70,11 @@ def test_deserialize_parameter_no_schema_or_type(value, parameter_spec_dict):
     ],
 )
 def test_deserialize_parameter_parse_success(
-    value, schema_type, expected_value
+    mocker, value, schema_type, expected_value
 ):
     location = 'query'
     name = 'p'
-    parameters = {location: {name: value}}
+    parameters = mocker.MagicMock(**{location: {name: value}})
     parameter_spec_dict = {'schema': {'type': schema_type}}
 
     result = deserialize_parameter(
@@ -93,10 +95,10 @@ def test_deserialize_parameter_parse_success(
         ('[]', 'array'),  # Unsupported yet
     ],
 )
-def test_deserialize_parameter_parse_error(value, schema_type):
+def test_deserialize_parameter_parse_error(mocker, value, schema_type):
     location = 'query'
     name = 'p'
-    parameters = {location: {name: value}}
+    parameters = mocker.MagicMock(**{location: {name: value}})
     parameter_spec_dict = {'schema': {'type': schema_type}}
 
     result = deserialize_parameter(

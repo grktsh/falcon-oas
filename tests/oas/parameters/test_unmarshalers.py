@@ -19,14 +19,14 @@ def unmarshal():
     return ParametersUnmarshaler(SchemaUnmarshaler()).unmarshal
 
 
-def test_missing(unmarshal):
-    values = {}
+def test_missing(mocker, unmarshal):
+    parameters = mocker.MagicMock(query={})
     parameter_spec_dict_list = [
         {'name': str('p1'), 'in': str('query'), 'required': True},
         {'name': 'p2', 'in': 'query'},
     ]
 
-    _, errors = unmarshal(values, parameter_spec_dict_list)
+    _, errors = unmarshal(parameters, parameter_spec_dict_list)
 
     assert len(errors) == 1
     assert isinstance(errors[0], jsonschema.ValidationError)
@@ -38,8 +38,8 @@ def test_missing(unmarshal):
     assert errors[0].path == deque(['query', 'p1'])
 
 
-def test_default(unmarshal):
-    values = {}
+def test_default(mocker, unmarshal):
+    parameters = mocker.MagicMock(query={})
     parameter_spec_dict_list = [
         {'name': 'param1', 'in': 'query', 'schema': {'default': 123}},
         {
@@ -49,23 +49,23 @@ def test_default(unmarshal):
             'schema': {'default': 'x'},
         },
     ]
-    unmarshaled, errors = unmarshal(values, parameter_spec_dict_list)
+    unmarshaled, errors = unmarshal(parameters, parameter_spec_dict_list)
 
     assert unmarshaled == {'query': {'param1': 123, 'param2': 'x'}}
     assert errors is None
 
 
-def test_undocumented_schema(unmarshal):
-    values = {'query': {'param1': 'foo'}}
+def test_undocumented_schema(mocker, unmarshal):
+    parameters = mocker.MagicMock(query={'param1': 'foo'})
     parameter_spec_dict_list = [{'name': 'param1', 'in': 'query'}]
-    unmarshaled, errors = unmarshal(values, parameter_spec_dict_list)
+    unmarshaled, errors = unmarshal(parameters, parameter_spec_dict_list)
 
-    assert unmarshaled == values
+    assert unmarshaled == {'query': {'param1': 'foo'}}
     assert errors is None
 
 
-def test_unmarshal_success(unmarshal):
-    values = {'query': {'param1': '2018-01-02'}}
+def test_unmarshal_success(mocker, unmarshal):
+    parameters = mocker.MagicMock(query={'param1': '2018-01-02'})
     parameter_spec_dict_list = [
         {
             'name': 'param1',
@@ -73,22 +73,22 @@ def test_unmarshal_success(unmarshal):
             'schema': {'type': 'string', 'format': 'date'},
         }
     ]
-    unmarshaled, errors = unmarshal(values, parameter_spec_dict_list)
+    unmarshaled, errors = unmarshal(parameters, parameter_spec_dict_list)
 
     assert unmarshaled == {'query': {'param1': datetime.date(2018, 1, 2)}}
     assert errors is None
 
 
-def test_unmarshal_error(unmarshal):
-    values = {'query': {'p1': str('2018/01/02')}}
+def test_unmarshal_error(mocker, unmarshal):
+    parameters = mocker.MagicMock(query={'param1': str('2018/01/02')})
     parameter_spec_dict_list = [
         {
-            'name': 'p1',
+            'name': 'param1',
             'in': 'query',
             'schema': {'type': 'string', 'format': str('date')},
         }
     ]
-    _, errors = unmarshal(values, parameter_spec_dict_list)
+    _, errors = unmarshal(parameters, parameter_spec_dict_list)
 
     assert len(errors) == 1
     assert isinstance(errors[0], jsonschema.ValidationError)
@@ -98,4 +98,4 @@ def test_unmarshal_error(unmarshal):
     assert errors[0].instance == '2018/01/02'
     assert errors[0].schema == {'type': 'string', 'format': str('date')}
     assert errors[0].schema_path == deque([0, 'schema', 'format'])
-    assert errors[0].path == deque(['query', 'p1'])
+    assert errors[0].path == deque(['query', 'param1'])

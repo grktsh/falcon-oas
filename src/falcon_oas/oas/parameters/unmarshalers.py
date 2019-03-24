@@ -18,10 +18,10 @@ class ParametersUnmarshaler(object):
     def __init__(self, schema_unmarshaler):
         self._unmarshal_schema = schema_unmarshaler.unmarshal
 
-    def unmarshal(self, values, parameter_spec_dicts):
+    def unmarshal(self, parameters, parameter_spec_dicts):
         non_confidential_values = {
-            'query': values.get('query'),
-            'path': values.get('path'),
+            'query': parameters.query,
+            'path': parameters.path,
         }
         logger.info('Request parameters: %r', non_confidential_values)
 
@@ -34,7 +34,7 @@ class ParametersUnmarshaler(object):
 
             try:
                 value, schema = deserialize_parameter(
-                    values, location, name, parameter_spec_dict
+                    parameters, location, name, parameter_spec_dict
                 )
             except KeyError:
                 if parameter_spec_dict.get('required', False):

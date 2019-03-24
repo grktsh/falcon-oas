@@ -24,7 +24,7 @@ class RequestUnmarshalMiddleware(object):
 
         oas_req = req.context['oas.request']
         parameters, parameter_errors = self._unmarshal_parameters(
-            oas_req.parameters, operation['parameters']
+            oas_req, operation['parameters']
         )
         if parameter_errors is None:
             req.context['oas.parameters'] = parameters
@@ -36,7 +36,7 @@ class RequestUnmarshalMiddleware(object):
 
         if 'requestBody' in operation:
             request_body, request_body_errors = self._unmarshal_request_body(
-                oas_req.get_media, oas_req.media_type, operation['requestBody']
+                oas_req, operation['requestBody']
             )
             if request_body_errors is None:
                 req.context['oas.request_body'] = request_body

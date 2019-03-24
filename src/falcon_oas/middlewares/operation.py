@@ -42,22 +42,42 @@ class _RequestAdapter(Request):
     def method(self):
         return self._req.method.lower()
 
+    @property
+    def path(self):
+        return self._params
+
+    @property
+    def query(self):
+        return self._req.params
+
     @cached_property
-    def parameters(self):
-        return {
-            'query': self._req.params,
-            'header': _Indexer(self._req.get_header),
-            'path': self._params,
-            'cookie': self._req.cookies,
-        }
+    def header(self):
+        return _Indexer(self._req.get_header)
+
+    # Use cached_property since Falcon 1 copies cookies every time.
+    @cached_property
+    def cookie(self):
+        return self._req.cookies
+
+    @property
+    def content_length(self):
+        return self._req.content_length or 0
 
     @property
     def media_type(self):
         content_type = self._req.content_type
         return content_type and content_type.split(';', 1)[0]
 
-    def get_media(self):
-        return self._req.media
+    @property
+    def media(self):
+        try:
+            return self._req.media
+        except ValueError as e:
+            # Convert ValueError which Falcon 1 raises to
+            # falcon.HTTPBadRequest which Falcon 2 raises.
+            raise falcon.HTTPBadRequest(
+                'Invalid JSON', 'Could not parse JSON body - {0}'.format(e)
+            )
 
 
 class OperationMiddleware(object):

@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import datetime
 from collections import deque
 
+import falcon
 import jsonschema
 import pytest
 
@@ -24,14 +25,11 @@ def media_type():
     return 'application/json'
 
 
-def test_missing_required(unmarshal, media_type):
-    def get_value():
-        import json
-
-        return json.loads('')
-
+def test_missing_required(mocker, unmarshal):
+    request_body = mocker.MagicMock(content_length=0)
     request_body_spec_dict = {'content': {}, 'required': True}
-    _, errors = unmarshal(get_value, media_type, request_body_spec_dict)
+
+    _, errors = unmarshal(request_body, request_body_spec_dict)
 
     assert len(errors) == 1
     error = errors[0]
@@ -44,52 +42,57 @@ def test_missing_required(unmarshal, media_type):
     assert error.path == deque([])
 
 
-def test_missing_optional(unmarshal, media_type):
-    def get_value():
-        import json
-
-        return json.loads('')
-
+def test_missing_optional(mocker, unmarshal):
+    request_body = mocker.MagicMock(content_length=0)
     request_body_spec_dict = {'content': {}}
-    result = unmarshal(get_value, media_type, request_body_spec_dict)
+
+    result = unmarshal(request_body, request_body_spec_dict)
 
     assert result == (None, None)
 
 
-def test_undocumented_media_type_schema(unmarshal, media_type):
-    def get_value():
-        return 'foo'
+def test_media_error(mocker, unmarshal):
+    request_body = mocker.MagicMock()
+    type(request_body).media = mocker.PropertyMock(
+        side_effect=falcon.HTTPBadRequest
+    )
+    request_body_spec_dict = {'content': {}}
 
+    with pytest.raises(falcon.HTTPBadRequest):
+        unmarshal(request_body, request_body_spec_dict)
+
+
+def test_undocumented_media_type_schema(mocker, unmarshal, media_type):
+    request_body = mocker.MagicMock(media='foo', media_type=media_type)
     request_body_spec_dict = {'content': {media_type: {}}}
-    result = unmarshal(get_value, media_type, request_body_spec_dict)
+
+    result = unmarshal(request_body, request_body_spec_dict)
 
     assert result == ('foo', None)
 
 
-def test_unmarshal_success(unmarshal, media_type):
-    def get_value():
-        return '2018-01-02'
-
+def test_unmarshal_success(mocker, unmarshal, media_type):
+    request_body = mocker.MagicMock(media='2018-01-02', media_type=media_type)
     request_body_spec_dict = {
         'content': {
             media_type: {'schema': {'type': 'string', 'format': 'date'}}
         }
     }
-    result = unmarshal(get_value, media_type, request_body_spec_dict)
+    result = unmarshal(request_body, request_body_spec_dict)
 
     assert result == (datetime.date(2018, 1, 2), None)
 
 
-def test_unmarshal_error(unmarshal, media_type):
-    def get_value():
-        return str('2018/01/02')
-
+def test_unmarshal_error(mocker, unmarshal, media_type):
+    request_body = mocker.MagicMock(
+        media=str('2018/01/02'), media_type=media_type
+    )
     request_body_spec_dict = {
         'content': {
             media_type: {'schema': {'type': 'string', 'format': str('date')}}
         }
     }
-    _, errors = unmarshal(get_value, media_type, request_body_spec_dict)
+    _, errors = unmarshal(request_body, request_body_spec_dict)
 
     assert len(errors) == 1
     error = errors[0]
