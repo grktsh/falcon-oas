@@ -19,26 +19,24 @@ class SecurityMiddleware(object):
         self._security_schemes = security_schemes
 
     def process_resource(self, req, resp, resource, params):
-        operation = req.context['oas.operation']
-        if operation is None:
+        oas = req.context['oas']
+        if not oas:
             return
 
-        if self._security_schemes and operation['security']:
-            oas_req = req.context['oas.request']
-
+        if self._security_schemes and oas.operation['security']:
             # ``requirement`` is a alternative security requirement
             # object.  Only one of the security requirement objects
             # need to be satisfied to authorize a request.
-            for requirement in operation['security']:
-                user = self._satisfy_requirement(oas_req, requirement)
+            for requirement in oas.operation['security']:
+                user = self._satisfy_requirement(oas.request, requirement)
                 if user:
                     if user is not True:
-                        req.context['oas.user'] = user
+                        oas.user = user
                     return
 
             logger.warning(
                 'No security requirement was satisfied: %r',
-                operation['security'],
+                oas.operation['security'],
             )
             # TODO: distinguish unauthorized error from forbidden error
             raise falcon.HTTPForbidden()

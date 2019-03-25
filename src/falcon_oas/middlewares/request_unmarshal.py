@@ -18,28 +18,27 @@ class RequestUnmarshalMiddleware(object):
         ).unmarshal
 
     def process_resource(self, req, resp, resource, params):
-        operation = req.context['oas.operation']
-        if operation is None:
+        oas = req.context['oas']
+        if not oas:
             return
 
-        oas_req = req.context['oas.request']
         parameters, parameter_errors = self._unmarshal_parameters(
-            oas_req, operation['parameters']
+            oas.request, oas.operation['parameters']
         )
         if parameter_errors is None:
-            req.context['oas.parameters'] = parameters
+            oas.parameters = parameters
             if 'path' in parameters:
                 params.update(parameters['path'])
         else:
             for error in parameter_errors:
                 error.schema_path.appendleft('parameters')
 
-        if 'requestBody' in operation:
+        if 'requestBody' in oas.operation:
             request_body, request_body_errors = self._unmarshal_request_body(
-                oas_req, operation['requestBody']
+                oas.request, oas.operation['requestBody']
             )
             if request_body_errors is None:
-                req.context['oas.request_body'] = request_body
+                oas.request_body = request_body
             else:
                 for error in request_body_errors:
                     error.schema_path.appendleft('requestBody')

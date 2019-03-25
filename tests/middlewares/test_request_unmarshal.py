@@ -10,6 +10,7 @@ import falcon
 import pytest
 from falcon import testing
 
+import falcon_oas
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.middlewares.request_unmarshal import RequestUnmarshalMiddleware
 from falcon_oas.oas.exceptions import UnmarshalError
@@ -24,7 +25,8 @@ def create_app(spec_dict):
         middleware=[
             OperationMiddleware(spec),
             RequestUnmarshalMiddleware(SchemaUnmarshaler()),
-        ]
+        ],
+        request_type=falcon_oas.Request,
     )
     return app
 
@@ -39,8 +41,7 @@ def test_undocumented_request(resource):
     assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
-    assert 'oas.parameters' not in req.context
-    assert 'oas.request_body' not in req.context
+    assert req.context['oas'] is None
 
 
 def test_success(resource):
@@ -63,6 +64,14 @@ def test_success(resource):
               in: query
               schema:
                 type: integer
+            - name: X-Version
+              in: header
+              schema:
+                type: integer
+            - name: c
+              in: cookie
+              schema:
+                type: integer
         """
     )
     app = create_app(spec_dict)
@@ -72,17 +81,27 @@ def test_success(resource):
     client.simulate_post(
         path='/path/2',
         query_string=str('q=3'),
-        headers={'Content-Type': str('application/json')},
+        headers={
+            'Content-Type': str('application/json'),
+            'X-Version': str('5'),
+            'Cookie': str('c=7'),
+        },
         body='"foo"',
     )
 
     req = resource.captured_req
-    assert req.context['oas.parameters'] == {
+    assert req.context['oas'].parameters == {
         'query': {'q': 3},
         'path': {'id': 2},
+        'header': {'X-Version': 5},
+        'cookie': {'c': 7},
     }
-    assert req.context['oas.request_body'] == 'foo'
+    assert req.context['oas'].request_body == 'foo'
     assert resource.captured_kwargs == {'id': 2}
+    assert req.oas_query == {'q': 3}
+    assert req.oas_header == {'X-Version': 5}
+    assert req.oas_cookie == {'c': 7}
+    assert req.oas_media == 'foo'
 
 
 def test_success_without_request_body(resource):
@@ -102,8 +121,8 @@ def test_success_without_request_body(resource):
     )
 
     req = resource.captured_req
-    assert req.context['oas.parameters'] == {}
-    assert 'oas.request_body' not in req.context
+    assert req.context['oas'].parameters == {}
+    assert req.context['oas'].request_body is None
     assert resource.captured_kwargs == {}
 
 
@@ -138,8 +157,8 @@ def test_success_request_body_with_ref(resource):
     )
 
     req = resource.captured_req
-    assert req.context['oas.parameters'] == {}
-    assert req.context['oas.request_body'] == 'foo'
+    assert req.context['oas'].parameters == {}
+    assert req.context['oas'].request_body == 'foo'
 
 
 def test_errors(resource):

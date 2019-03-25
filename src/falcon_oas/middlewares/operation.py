@@ -80,6 +80,19 @@ class _RequestAdapter(Request):
             )
 
 
+class _Context(object):
+    __slots__ = ('operation', 'request', 'user', 'parameters', 'request_body')
+
+    def __init__(
+        self, operation, request, user=None, parameters=None, request_body=None
+    ):
+        self.operation = operation
+        self.request = request
+        self.user = user
+        self.parameters = parameters
+        self.request_body = request_body
+
+
 class OperationMiddleware(object):
     def __init__(self, spec):
         self._spec = spec
@@ -102,5 +115,4 @@ class OperationMiddleware(object):
         except UndocumentedRequest:
             operation = None
 
-        req.context['oas.operation'] = operation
-        req.context['oas.request'] = oas_req
+        req.context['oas'] = operation and _Context(operation, oas_req)

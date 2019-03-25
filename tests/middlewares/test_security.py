@@ -8,6 +8,7 @@ import falcon
 import pytest
 from falcon import testing
 
+import falcon_oas
 from falcon_oas import extensions
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.middlewares.security import get_security_schemes
@@ -45,7 +46,8 @@ def create_app(spec_dict):
         middleware=[
             OperationMiddleware(spec),
             SecurityMiddleware(security_schemes),
-        ]
+        ],
+        request_type=falcon_oas.Request,
     )
     return app
 
@@ -60,7 +62,7 @@ def test_undocumented_request(resource):
     assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
-    assert 'oas.user' not in req.context
+    assert req.context['oas'] is None
 
 
 def test_without_security(resource):
@@ -71,7 +73,7 @@ def test_without_security(resource):
     client.simulate_get(path='/path')
 
     req = resource.captured_req
-    assert 'oas.user' not in req.context
+    assert req.context['oas'].user is None
 
 
 @pytest.mark.parametrize(
@@ -103,7 +105,8 @@ def test_success(headers, security, resource):
     assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
-    assert req.context['oas.user'] == user
+    assert req.context['oas'].user == user
+    assert req.oas_user == user
 
 
 def test_success_without_user(resource):
@@ -119,7 +122,7 @@ def test_success_without_user(resource):
     assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
-    assert 'oas.user' not in req.context
+    assert req.context['oas'].user is None
 
 
 @pytest.mark.parametrize(
@@ -160,7 +163,7 @@ def test_unsupported_type(key, resource):
     client.simulate_get(path='/path')
 
     req = resource.captured_req
-    assert 'oas.user' not in req.context
+    assert req.context['oas'].user is None
 
 
 def test_without_user_loader(resource):
@@ -178,7 +181,7 @@ def test_without_user_loader(resource):
     client.simulate_get(path='/path')
 
     req = resource.captured_req
-    assert 'oas.user' not in req.context
+    assert req.context['oas'].user is None
 
 
 def test_get_security_schemes():

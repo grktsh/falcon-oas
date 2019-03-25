@@ -51,8 +51,8 @@ from __future__ import unicode_literals
 #:     Allow the access.
 #:
 #: Truthy value other than ``True`` as authenticated user
-#:     Allow the access.  The return value is stored in
-#:     ``req.context['oas.user']``.
+#:     Allow the access.  The return value is stored as
+#:     ``req.context['oas'].user``.
 #:
 #: Falsy value
 #:     Deny the access.  403 Forbidden is raised.

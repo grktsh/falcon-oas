@@ -8,6 +8,7 @@ import falcon
 import pytest
 from falcon import testing
 
+import falcon_oas
 from falcon_oas.middlewares.operation import _RequestAdapter
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.oas.spec import create_spec_from_dict
@@ -16,7 +17,9 @@ from tests.helpers import yaml_load_dedent
 
 def create_app(spec_dict):
     spec = create_spec_from_dict(spec_dict)
-    app = falcon.API(middleware=[OperationMiddleware(spec)])
+    app = falcon.API(
+        middleware=[OperationMiddleware(spec)], request_type=falcon_oas.Request
+    )
     return app
 
 
@@ -90,7 +93,7 @@ def test_undocumented_request(resource):
     assert response.status == falcon.HTTP_OK
 
     req = resource.captured_req
-    assert req.context['oas.operation'] is None
+    assert req.context['oas'] is None
 
 
 def test_documented_request(resource):
@@ -110,10 +113,10 @@ def test_documented_request(resource):
     )
 
     req = resource.captured_req
-    assert req.context['oas.operation'] is not None
-    assert req.context['oas.request'].query == {'q': '3', 'r': ['5', '7']}
-    assert req.context['oas.request'].header['X-Key'] == 'key'
-    assert req.context['oas.request'].path == {'id': '2'}
-    assert req.context['oas.request'].cookie == {'x': '5'}
-    assert req.context['oas.request'].media_type == 'application/json'
-    assert req.context['oas.request'].media == 'foo'
+    assert req.context['oas'].operation is not None
+    assert req.context['oas'].request.query == {'q': '3', 'r': ['5', '7']}
+    assert req.context['oas'].request.header['X-Key'] == 'key'
+    assert req.context['oas'].request.path == {'id': '2'}
+    assert req.context['oas'].request.cookie == {'x': '5'}
+    assert req.context['oas'].request.media_type == 'application/json'
+    assert req.context['oas'].request.media == 'foo'
