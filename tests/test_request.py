@@ -9,12 +9,6 @@ from falcon import testing
 from falcon_oas import Request
 
 
-def test_host_url():
-    req = Request(testing.create_environ(port=8080))
-
-    assert req.host_url == 'http://' + testing.DEFAULT_HOST + ':8080'
-
-
 def test_oas_query():
     req = Request(testing.create_environ())
     req.context['oas.parameters'] = {'query': {'q': 2}}

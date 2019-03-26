@@ -8,10 +8,6 @@ import falcon
 
 class Request(falcon.Request):
     @property
-    def host_url(self):
-        return self.scheme + '://' + self.netloc
-
-    @property
     def oas_query(self):
         return self.context['oas.parameters']['query']
 
