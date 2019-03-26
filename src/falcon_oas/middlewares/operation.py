@@ -100,12 +100,6 @@ class OperationMiddleware(object):
             )
             raise falcon.HTTPBadRequest()
         except UndocumentedRequest:
-            logger.warning(
-                'Undocumented request: %s %s (%s)',
-                req.method,
-                req.path,
-                req.content_type,
-            )
             operation = None
 
         req.context['oas.operation'] = operation

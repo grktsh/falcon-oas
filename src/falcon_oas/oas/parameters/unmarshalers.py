@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import logging
 from collections import defaultdict
 
 import jsonschema
@@ -11,20 +10,12 @@ import jsonschema
 from ..exceptions import ValidationError
 from .deserializers import deserialize_parameter
 
-logger = logging.getLogger(__name__)
-
 
 class ParametersUnmarshaler(object):
     def __init__(self, schema_unmarshaler):
         self._unmarshal_schema = schema_unmarshaler.unmarshal
 
     def unmarshal(self, parameters, parameter_spec_dicts):
-        non_confidential_values = {
-            'query': parameters.query,
-            'path': parameters.path,
-        }
-        logger.info('Request parameters: %r', non_confidential_values)
-
         unmarshaled = defaultdict(dict)
         errors = []
 
