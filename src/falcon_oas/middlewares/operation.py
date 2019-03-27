@@ -8,7 +8,6 @@ import logging
 import falcon
 
 from ..oas.exceptions import UndocumentedMediaType
-from ..oas.exceptions import UndocumentedRequest
 from ..oas.request import Request
 from ..utils import cached_property
 
@@ -112,7 +111,5 @@ class OperationMiddleware(object):
                 req.content_type,
             )
             raise falcon.HTTPBadRequest()
-        except UndocumentedRequest:
-            operation = None
 
         req.context['oas'] = operation and _Context(operation, oas_req)

@@ -13,7 +13,7 @@ except ImportError:  # pragma: no cover
     from functools32 import lru_cache
 from six.moves.urllib_parse import urlparse
 
-from .exceptions import UndocumentedRequest, UndocumentedMediaType
+from .exceptions import UndocumentedMediaType
 
 
 def create_spec_from_dict(spec_dict, base_path=None):
@@ -32,7 +32,7 @@ class Spec(object):
     @lru_cache(maxsize=None)
     def get_operation(self, uri_template, method, media_type):
         if not uri_template.startswith(self.base_path):
-            raise UndocumentedRequest()
+            return None
 
         path = uri_template[len(self.base_path) :]
         try:
@@ -40,7 +40,7 @@ class Spec(object):
             path_item = self.spec_dict['paths'][path]
             operation = path_item[method]
         except KeyError:
-            raise UndocumentedRequest()
+            return None
 
         if 'requestBody' in operation:
             # TODO: Support media type range

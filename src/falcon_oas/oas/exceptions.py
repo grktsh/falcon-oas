@@ -8,11 +8,7 @@ class Error(Exception):
     pass
 
 
-class UndocumentedRequest(Error):
-    pass
-
-
-class UndocumentedMediaType(UndocumentedRequest):
+class UndocumentedMediaType(Error):
     pass
 
 

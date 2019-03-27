@@ -7,7 +7,6 @@ from __future__ import unicode_literals
 import pytest
 
 from falcon_oas.oas.exceptions import UndocumentedMediaType
-from falcon_oas.oas.exceptions import UndocumentedRequest
 from falcon_oas.oas.spec import _get_base_path
 from falcon_oas.oas.spec import _get_security
 from falcon_oas.oas.spec import create_spec_from_dict
@@ -171,14 +170,12 @@ def test_spec_get_operation_request_body_deref():
 
 def test_spec_get_operation_unknown_base_path():
     spec = create_spec_from_dict({'servers': [{'url': '/api'}], 'paths': {}})
-    with pytest.raises(UndocumentedRequest):
-        spec.get_operation('/path', 'get', None)
+    assert spec.get_operation('/path', 'get', None) is None
 
 
 def test_spec_get_operation_undocumented_operation():
     spec = create_spec_from_dict({})
-    with pytest.raises(UndocumentedRequest):
-        spec.get_operation('/path', 'get', None)
+    assert spec.get_operation('/path', 'get', None) is None
 
 
 def test_spec_get_operation_security():
