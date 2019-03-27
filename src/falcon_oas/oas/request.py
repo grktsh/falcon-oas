@@ -58,3 +58,7 @@ class Request(RequestParameters, RequestBody):
     @abstractproperty
     def method(self):
         """Return the HTTP method of Operation Object."""
+
+    @abstractproperty
+    def context(self):
+        """Return the request context."""

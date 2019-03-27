@@ -42,6 +42,10 @@ class _RequestAdapter(Request):
         return self._req.method.lower()
 
     @property
+    def context(self):
+        return self._req.context
+
+    @property
     def path(self):
         return self._params
 

@@ -37,12 +37,14 @@ def req():
     )
     req = falcon.Request(env)
     req.uri_template = '/users/{id}'
+    req.context['x'] = 42
     return _RequestAdapter(req, {'id': '42'})
 
 
 def test_request_adapter(mocker, req):
     assert req.uri_template == '/users/{id}'
     assert req.method == 'get'
+    assert req.context['x'] == 42
     assert req.path == {'id': '42'}
     assert req.query == {'page': '1'}
     assert req.header['x-api-key'] == 'secret-key'
