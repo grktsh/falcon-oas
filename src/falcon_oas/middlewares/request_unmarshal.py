@@ -4,26 +4,21 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from ..oas.exceptions import UnmarshalError
-from ..oas.parameters.unmarshalers import ParametersUnmarshaler
-from ..oas.request_body import RequestBodyUnmarshaler
+from ..oas.parameters.unmarshalers import unmarshal_parameters
+from ..oas.request_body import unmarshal_request_body
 
 
 class RequestUnmarshalMiddleware(object):
     def __init__(self, schema_unmarshaler):
-        self._unmarshal_parameters = ParametersUnmarshaler(
-            schema_unmarshaler
-        ).unmarshal
-        self._unmarshal_request_body = RequestBodyUnmarshaler(
-            schema_unmarshaler
-        ).unmarshal
+        self._schema_unmarshaler = schema_unmarshaler
 
     def process_resource(self, req, resp, resource, params):
         oas = req.context['oas']
         if not oas:
             return
 
-        parameters, parameter_errors = self._unmarshal_parameters(
-            oas.request, oas.operation['parameters']
+        parameters, parameter_errors = unmarshal_parameters(
+            self._schema_unmarshaler, oas.request, oas.operation['parameters']
         )
         if parameter_errors is None:
             oas.parameters = parameters
@@ -34,8 +29,10 @@ class RequestUnmarshalMiddleware(object):
                 error.schema_path.appendleft('parameters')
 
         if 'requestBody' in oas.operation:
-            request_body, request_body_errors = self._unmarshal_request_body(
-                oas.request, oas.operation['requestBody']
+            request_body, request_body_errors = unmarshal_request_body(
+                self._schema_unmarshaler,
+                oas.request,
+                oas.operation['requestBody'],
             )
             if request_body_errors is None:
                 oas.request_body = request_body

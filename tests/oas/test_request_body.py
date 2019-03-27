@@ -5,19 +5,20 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import datetime
+import functools
 from collections import deque
 
 import falcon
 import jsonschema
 import pytest
 
-from falcon_oas.oas.request_body import RequestBodyUnmarshaler
+from falcon_oas.oas.request_body import unmarshal_request_body
 from falcon_oas.oas.schema.unmarshalers import SchemaUnmarshaler
 
 
 @pytest.fixture
 def unmarshal():
-    return RequestBodyUnmarshaler(SchemaUnmarshaler()).unmarshal
+    return functools.partial(unmarshal_request_body, SchemaUnmarshaler())
 
 
 @pytest.fixture

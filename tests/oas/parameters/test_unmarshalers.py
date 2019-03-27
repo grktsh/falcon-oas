@@ -5,18 +5,19 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import datetime
+import functools
 from collections import deque
 
 import jsonschema
 import pytest
 
-from falcon_oas.oas.parameters.unmarshalers import ParametersUnmarshaler
+from falcon_oas.oas.parameters.unmarshalers import unmarshal_parameters
 from falcon_oas.oas.schema.unmarshalers import SchemaUnmarshaler
 
 
 @pytest.fixture
 def unmarshal():
-    return ParametersUnmarshaler(SchemaUnmarshaler()).unmarshal
+    return functools.partial(unmarshal_parameters, SchemaUnmarshaler())
 
 
 def test_missing(mocker, unmarshal):
