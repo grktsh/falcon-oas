@@ -8,7 +8,7 @@ import logging
 import falcon
 
 from ..oas.exceptions import UndocumentedMediaType
-from ..oas.request import Request
+from ..oas.request.models import Request
 from ..utils import cached_property
 
 logger = logging.getLogger(__name__)
