@@ -13,6 +13,20 @@ falcon-oas
    :alt: Codecov
    :target: https://codecov.io/gh/grktsh/falcon-oas
 
+Prerequisites
+-------------
+
+- Validated OpenAPI 3 document
+
+  - falcon-oas supposes the OpenAPI 3 document is validated in advance just like the source code is tested in advance.
+
+Features
+--------
+
+- Request validation and unmarshaling
+- Access control
+- Association of Path Item Objects and resource classes in Falcon
+
 Problems
 --------
 
