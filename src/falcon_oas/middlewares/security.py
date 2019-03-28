@@ -3,17 +3,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import logging
-
-import falcon
 from six import iteritems
 
 from .. import extensions
-from ..oas.exceptions import SecurityError
 from ..oas.security import AccessControl
 from ..utils import import_string
-
-logger = logging.getLogger(__name__)
 
 
 class SecurityMiddleware(object):
@@ -25,17 +19,7 @@ class SecurityMiddleware(object):
         if not oas:
             return
 
-        try:
-            oas.user = self._access_control.handle(
-                oas.request, oas.operation
-            )
-        except SecurityError:
-            logger.warning(
-                'No security requirement was satisfied: %r',
-                oas.operation['security'],
-            )
-            # TODO: distinguish unauthorized error from forbidden error
-            raise falcon.HTTPForbidden()
+        oas.user = self._access_control.handle(oas.request, oas.operation)
 
 
 def get_security_schemes(spec, base_module=''):

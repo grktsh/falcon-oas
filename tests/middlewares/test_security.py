@@ -13,6 +13,7 @@ from falcon_oas import extensions
 from falcon_oas.middlewares.operation import OperationMiddleware
 from falcon_oas.middlewares.security import get_security_schemes
 from falcon_oas.middlewares.security import SecurityMiddleware
+from falcon_oas.oas.exceptions import SecurityError
 from falcon_oas.oas.spec import create_spec_from_dict
 from tests.helpers import yaml_load_dedent
 
@@ -141,15 +142,16 @@ def test_success_without_user(resource):
         ),
     ],
 )
-def test_forbidden(headers, security, resource):
+def test_security_error(headers, security, resource):
     spec_dict = {'paths': {'/path': {'get': {'security': security}}}}
     app = create_app(spec_dict)
     app.add_route('/path', resource)
 
     client = testing.TestClient(app)
-    response = client.simulate_get(path='/path', headers=headers)
 
-    assert response.status == falcon.HTTP_FORBIDDEN
+    with pytest.raises(SecurityError):
+        client.simulate_get(path='/path', headers=headers)
+
     assert resource.called is False
 
 

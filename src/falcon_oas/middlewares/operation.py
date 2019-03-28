@@ -3,15 +3,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import logging
-
 import falcon
 
-from ..oas.exceptions import UndocumentedMediaType
 from ..oas.request.models import Request
 from ..utils import cached_property
-
-logger = logging.getLogger(__name__)
 
 
 class _Indexer(object):
@@ -103,17 +98,8 @@ class OperationMiddleware(object):
     def process_resource(self, req, resp, resource, params):
         oas_req = _RequestAdapter(req, params)
 
-        try:
-            operation = self._spec.get_operation(
-                oas_req.uri_template, oas_req.method, oas_req.media_type
-            )
-        except UndocumentedMediaType:
-            logger.warning(
-                'Undocumented media type: %s %s (%s)',
-                req.method,
-                req.path,
-                req.content_type,
-            )
-            raise falcon.HTTPBadRequest()
+        operation = self._spec.get_operation(
+            oas_req.uri_template, oas_req.method, oas_req.media_type
+        )
 
         req.context['oas'] = operation and _Context(operation, oas_req)

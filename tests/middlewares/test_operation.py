@@ -11,6 +11,7 @@ from falcon import testing
 import falcon_oas
 from falcon_oas.middlewares.operation import _RequestAdapter
 from falcon_oas.middlewares.operation import OperationMiddleware
+from falcon_oas.oas.exceptions import UndocumentedMediaType
 from falcon_oas.oas.spec import create_spec_from_dict
 from tests.helpers import yaml_load_dedent
 
@@ -78,11 +79,13 @@ def test_undocumented_media_type(resource):
     app.add_route('/path', resource)
 
     client = testing.TestClient(app)
-    response = client.simulate_get(
-        path='/path', headers={'Content-Type': str('text/plain')}
-    )
 
-    assert response.status == falcon.HTTP_BAD_REQUEST
+    with pytest.raises(UndocumentedMediaType):
+        client.simulate_get(
+            path='/path', headers={'Content-Type': str('text/plain')}
+        )
+
+    assert resource.called is False
 
 
 def test_undocumented_request(resource):

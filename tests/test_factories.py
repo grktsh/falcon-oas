@@ -5,18 +5,22 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import falcon
-import pytest
 from falcon import testing
 
 from falcon_oas import extensions
 from falcon_oas.factories import OAS
-from falcon_oas.oas.exceptions import UnmarshalError
 from tests.helpers import yaml_load_dedent
 
 
 spec_dict = yaml_load_dedent(
     """\
     paths:
+      /undocumented-media-type:
+        {0}: test_factories.UndocumentedMediaTypeResource
+        post:
+          requestBody:
+            content:
+              application/json: {{}}
       /security:
         {0}: test_factories.SecurityResource
         get:
@@ -43,6 +47,11 @@ spec_dict = yaml_load_dedent(
         extensions.IMPLEMENTATION
     )
 )
+
+
+class UndocumentedMediaTypeResource(object):
+    def on_post(self, req, resp):
+        pass
 
 
 class SecurityResource(object):
@@ -75,6 +84,9 @@ def test_oas_default():
     )
     assert response.status == falcon.HTTP_OK
 
+    response = client.simulate_post(path='/undocumented-media-type')
+    assert response.status == falcon.HTTP_BAD_REQUEST
+
     response = client.simulate_get(path='/security')
     assert response.status == falcon.HTTP_FORBIDDEN
 
@@ -97,8 +109,9 @@ def test_oas_disable_problems():
     assert response.status == falcon.HTTP_NOT_FOUND
     assert response.headers['Content-Type'] == falcon.MEDIA_JSON
 
-    with pytest.raises(UnmarshalError):
-        client.simulate_get(path='/request-unmarshal/xxx')
+    response = client.simulate_get(path='/request-unmarshal/xxx')
+
+    assert response.status == falcon.HTTP_BAD_REQUEST
 
 
 def test_oas_without_middlewares():

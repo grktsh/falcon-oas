@@ -6,14 +6,11 @@ from __future__ import unicode_literals
 
 import falcon
 import jsonschema
-import pytest
 from falcon import testing
 
 from falcon_oas.oas.exceptions import UnmarshalError
 from falcon_oas.problems import _Problem
-from falcon_oas.problems import http_error_handler
 from falcon_oas.problems import serialize_problem
-from falcon_oas.problems import unmarshal_error_handler
 from falcon_oas.problems import UNMARSHAL_PROBLEM_TYPE_URI
 from falcon_oas.problems import UnmarshalProblem
 
@@ -99,23 +96,3 @@ def test_serialize_problem_accept_html():
     serialize_problem(req, resp, problem)
 
     assert resp.content_type == 'application/json'
-
-
-def test_http_error_handler():
-    http_error = falcon.HTTPBadRequest()
-    req = falcon.Request(testing.create_environ())
-    resp = falcon.Response()
-    params = {}
-
-    with pytest.raises(_Problem):
-        http_error_handler(http_error, req, resp, params)
-
-
-def test_validation_error_handler():
-    unmarshal_error = UnmarshalError()
-    req = falcon.Request(testing.create_environ())
-    resp = falcon.Response()
-    params = {}
-
-    with pytest.raises(UnmarshalProblem):
-        unmarshal_error_handler(unmarshal_error, req, resp, params)

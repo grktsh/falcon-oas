@@ -62,9 +62,17 @@ def serialize_problem(req, resp, problem):
     resp.append_header('Vary', 'Accept')
 
 
-def http_error_handler(http_error, req, resp, params):
-    raise _Problem(http_error)
+def http_error_handler(error, req, resp, params):
+    raise _Problem(error)
 
 
-def unmarshal_error_handler(unmarshal_error, req, resp, params):
-    raise UnmarshalProblem(unmarshal_error)
+def undocumented_media_type_handler(error, req, resp, params):
+    raise _Problem(falcon.HTTPBadRequest())
+
+
+def security_error_handler(error, req, resp, params):
+    raise _Problem(falcon.HTTPForbidden())
+
+
+def unmarshal_error_handler(error, req, resp, params):
+    raise UnmarshalProblem(error)

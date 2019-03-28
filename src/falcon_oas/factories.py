@@ -9,11 +9,15 @@ from .middlewares.operation import OperationMiddleware
 from .middlewares.request_unmarshal import RequestUnmarshalMiddleware
 from .middlewares.security import get_security_schemes
 from .middlewares.security import SecurityMiddleware
+from .oas.exceptions import SecurityError
+from .oas.exceptions import UndocumentedMediaType
 from .oas.exceptions import UnmarshalError
 from .oas.schema.unmarshalers import SchemaUnmarshaler
 from .oas.spec import create_spec_from_dict
 from .problems import http_error_handler
+from .problems import security_error_handler
 from .problems import serialize_problem
+from .problems import undocumented_media_type_handler
 from .problems import unmarshal_error_handler
 from .routing import generate_routes
 
@@ -55,9 +59,14 @@ class OAS(object):
     def setup(self, api):
         api.req_options.auto_parse_qs_csv = False
 
+        api.add_error_handler(
+            UndocumentedMediaType, undocumented_media_type_handler
+        )
+        api.add_error_handler(SecurityError, security_error_handler)
+        api.add_error_handler(UnmarshalError, unmarshal_error_handler)
+
         if self.problems:
             api.add_error_handler(falcon.HTTPError, http_error_handler)
-            api.add_error_handler(UnmarshalError, unmarshal_error_handler)
             api.set_error_serializer(serialize_problem)
 
         for uri_template, resource_class in generate_routes(
