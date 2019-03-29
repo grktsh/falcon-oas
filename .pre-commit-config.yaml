@@ -1,18 +1,18 @@
 repos:
 - repo: https://github.com/asottile/reorder_python_imports
-  rev: v1.3.5
+  rev: v1.4.0
   hooks:
   - id: reorder-python-imports
     args:
     - --application-directories=.:src
 
 - repo: https://github.com/grktsh/ffffff
-  rev: v2018.11.15
+  rev: v2019.3.29
   hooks:
   - id: ffffff
 
 - repo: https://gitlab.com/pycqa/flake8
-  rev: 3.7.5
+  rev: 3.7.7
   hooks:
   - id: flake8
 
