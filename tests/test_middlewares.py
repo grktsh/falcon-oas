@@ -18,18 +18,27 @@ from falcon_oas.oas.exceptions import UnmarshalError
 from falcon_oas.oas.spec import create_spec_from_dict
 
 
-user = object()
+USER = object()
+
+
+def api_key_validator(value, scopes, request):
+    return value == 'secret'
 
 
 def session_cookie_loader(value, scopes, request):
-    return value and user
+    return value and USER
 
 
 @pytest.fixture
 def petstore_dict_with_implementation(petstore_dict):
-    name = 'tests.test_middlewares.session_cookie_loader'
-    security_scheme = petstore_dict['components']['securitySchemes']['session']
-    security_scheme[extensions.IMPLEMENTATION] = name
+    security_schemes = petstore_dict['components']['securitySchemes']
+
+    access_control = 'tests.test_middlewares.api_key_validator'
+    security_schemes['api_key'][extensions.IMPLEMENTATION] = access_control
+
+    access_control = 'tests.test_middlewares.session_cookie_loader'
+    security_schemes['session'][extensions.IMPLEMENTATION] = access_control
+
     return petstore_dict
 
 
@@ -117,16 +126,21 @@ def test_undocumented_request(resource):
     assert 'oas' not in req.context
 
 
-def test_security(resource, petstore_dict_with_implementation):
+@pytest.mark.parametrize(
+    'headers,user',
+    [
+        ({'Cookie': str('session=1')}, USER),
+        ({'X-API-Key': str('secret')}, None),
+    ],
+)
+def test_security(resource, petstore_dict_with_implementation, headers, user):
     app = create_app(petstore_dict_with_implementation)
     app.add_route('/api/v1/pets', resource)
 
     client = testing.TestClient(app)
 
     response = client.simulate_post(
-        path='/api/v1/pets',
-        headers={'Cookie': str('session=1')},
-        json={'name': 'momo'},
+        path='/api/v1/pets', headers=headers, json={'name': 'momo'}
     )
 
     assert response.status == falcon.HTTP_OK
@@ -195,12 +209,15 @@ def test_unmarshal_request_error(resource, petstore_dict):
 
 def test_get_security_schemes(petstore_dict_with_implementation):
     spec_dict = petstore_dict_with_implementation
-    security_scheme = spec_dict['components']['securitySchemes']['session']
+    security_schemes = spec_dict['components']['securitySchemes']
 
     spec = create_spec_from_dict(spec_dict)
 
     result = _get_security_schemes(spec)
-    assert result == {'session': (security_scheme, session_cookie_loader)}
+    assert result == {
+        'api_key': (security_schemes['api_key'], api_key_validator),
+        'session': (security_schemes['session'], session_cookie_loader),
+    }
 
 
 def test_get_security_schemes_none():

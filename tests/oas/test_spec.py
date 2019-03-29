@@ -10,162 +10,57 @@ from falcon_oas.oas.exceptions import UndocumentedMediaType
 from falcon_oas.oas.spec import _get_base_path
 from falcon_oas.oas.spec import _get_security
 from falcon_oas.oas.spec import create_spec_from_dict
-from tests.helpers import yaml_load_dedent
 
 
-def test_create_spec_from_dict():
-    spec_dict = yaml_load_dedent(
-        """\
-        components:
-          schemas:
-            Foo:
-              type: object
-              properties:
-                x:
-                  type: integer
-            Bar:
-              type: object
-              properties:
-                foo:
-                  $ref: '#/components/schemas/Foo'
-        """
-    )
-    spec = create_spec_from_dict(spec_dict)
-
-    bar_dict = spec.spec_dict['components']['schemas']['Bar']
-    assert bar_dict['properties']['foo'] == yaml_load_dedent(
-        """\
-        type: object
-        properties:
-          x:
-            type: integer
-        """
-    )
+@pytest.fixture
+def media_type():
+    return 'application/json'
 
 
-def test_spec_get_operation_parameters():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            paths:
-              /path:
-                get:
-                  parameters:
-                  - name: param1
-                    in: query
-                  - name: param2
-                    in: path
-                parameters:
-                - name: param1
-                  in: query
-                  required: true
-                - name: param3
-                  in: cookie
-            """
-        )
-    )
+def test_create_spec_from_dict(petstore_dict):
+    spec = create_spec_from_dict(petstore_dict)
 
-    operation = spec.get_operation('/path', 'get', None)
-    assert operation['parameters'] == [
-        {'name': 'param1', 'in': 'query'},
-        {'name': 'param2', 'in': 'path'},
-        {'name': 'param3', 'in': 'cookie'},
+    schemas = spec.spec_dict['components']['schemas']
+    assert schemas['PetNew']['allOf'][0] == schemas['PetUpdate']
+
+
+def test_spec_get_operation_parameters(petstore_dict, media_type):
+    operation_dict = petstore_dict['paths']['/v1/pets/{pet_id}']['get']
+    operation_dict['parameters'] = [
+        {'name': 'page', 'in': 'query'},
+        {'name': 'limit', 'in': 'query'},
+        {'name': 'pet_id', 'in': 'query'},
+        {'name': 'pet_id', 'in': 'path'},
     ]
+    spec = create_spec_from_dict(petstore_dict)
+
+    operation = spec.get_operation('/api/v1/pets/{pet_id}', 'get', media_type)
+    assert operation['parameters'] == operation_dict['parameters']
     assert 'requestBody' not in operation
 
 
-def test_spec_get_operation_parameters_deref():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            paths:
-              /path:
-                get:
-                  parameters:
-                  - $ref: '#components/parameters/test_param'
-            components:
-              parameters:
-                test_param:
-                  name: param1
-                  in: query
-                  schema:
-                    $ref: '#components/schemas/test_schema'
-              schemas:
-                test_schema:
-                  type: string
-            """
-        )
-    )
+def test_spec_get_operation_request_body_and_security(
+    petstore_dict, media_type
+):
+    spec = create_spec_from_dict(petstore_dict)
+    schemas = spec.spec_dict['components']['schemas']
 
-    operation = spec.get_operation('/path', 'get', None)
-    assert operation['parameters'] == [
-        {'name': 'param1', 'in': 'query', 'schema': {'type': 'string'}}
-    ]
-
-
-def test_spec_get_operation_request_body():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            paths:
-              /path:
-                get:
-                  requestBody:
-                    content:
-                      application/json: {}
-            """
-        )
-    )
-
-    operation = spec.get_operation('/path', 'get', 'application/json')
+    operation = spec.get_operation('/api/v1/pets', 'post', media_type)
     assert operation['parameters'] == []
-    assert operation['requestBody'] == {'content': {'application/json': {}}}
+    assert operation['requestBody'] == {
+        'content': {media_type: {'schema': schemas['PetNew']}},
+        'required': True,
+    }
+    assert operation['security'] == [{'api_key': []}, {'session': []}]
 
 
-def test_spec_get_operation_request_body_undocumented_media_type():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            paths:
-              /path:
-                get:
-                  requestBody:
-                    content:
-                      application/json: {}
-            """
-        )
-    )
+def test_spec_get_operation_request_body_undocumented_media_type(
+    petstore_dict
+):
+    spec = create_spec_from_dict(petstore_dict)
 
     with pytest.raises(UndocumentedMediaType):
-        spec.get_operation('/path', 'get', 'text/plain')
-
-
-def test_spec_get_operation_request_body_deref():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            paths:
-              /path:
-                post:
-                  requestBody:
-                    $ref: '#components/requestBodies/test_body'
-            components:
-              requestBodies:
-                test_body:
-                  content:
-                    application/json:
-                      schema:
-                        $ref: '#components/schemas/test_schema'
-              schemas:
-                test_schema:
-                  type: string
-            """
-        )
-    )
-    operation = spec.get_operation('/path', 'post', 'application/json')
-    assert operation['requestBody'] == {
-        'content': {'application/json': {'schema': {'type': 'string'}}}
-    }
+        spec.get_operation('/api/v1/pets', 'post', 'text/plain')
 
 
 def test_spec_get_operation_unknown_base_path():
@@ -178,43 +73,11 @@ def test_spec_get_operation_undocumented_operation():
     assert spec.get_operation('/path', 'get', None) is None
 
 
-def test_spec_get_operation_security():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            paths:
-              /path:
-                get:
-                  security:
-                  - test_scheme:
-                    - test_scope
-            """
-        )
-    )
-    operation = spec.get_operation('/path', 'get', None)
-    assert operation['security'] == [{'test_scheme': ['test_scope']}]
+def test_spec_get_security_schemes(petstore_dict):
+    spec = create_spec_from_dict(petstore_dict)
+    components = spec.spec_dict['components']
 
-
-def test_spec_get_security_schemes():
-    spec = create_spec_from_dict(
-        yaml_load_dedent(
-            """\
-            components:
-              securitySchemes:
-                api_key:
-                  $ref: '#components/schemas/api_key'
-              schemas:
-                api_key:
-                  type: apiKey
-                  name: X-API-Key
-                  in: header
-            """
-        )
-    )
-
-    assert spec.get_security_schemes() == {
-        'api_key': {'type': 'apiKey', 'name': 'X-API-Key', 'in': 'header'}
-    }
+    assert spec.get_security_schemes() == components['securitySchemes']
 
 
 def test_spec_get_security_schemes_none():

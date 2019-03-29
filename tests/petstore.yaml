@@ -33,6 +33,7 @@ paths:
         '400':
           $ref: '#/components/responses/ValidationError'
       security:
+      - api_key: []
       - session: []
   /v1/pets/{pet_id}:
     get:
@@ -120,6 +121,10 @@ components:
         name:
           type: string
   securitySchemes:
+    api_key:
+      type: apiKey
+      name: X-API-Key
+      in: header
     session:
       type: apiKey
       name: session

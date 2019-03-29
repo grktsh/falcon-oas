@@ -4,37 +4,19 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import pytest
-
 from falcon_oas import extensions
 from falcon_oas.oas.spec import create_spec_from_dict
 from falcon_oas.routing import generate_routes
-from tests.helpers import yaml_load_dedent
 
 
 class Resource(object):
     pass
 
 
-@pytest.fixture
-def spec_dict():
-    return yaml_load_dedent(
-        """\
-        paths:
-          /path1:
-            {}: test_routing.Resource
-          /path2:
-            get:
-              responses:
-                default:
-                  description: Success
-        """.format(
-            extensions.IMPLEMENTATION
-        )
-    )
+def test_generate_routes(petstore_dict):
+    path_item = petstore_dict['paths']['/v1/pets']
+    path_item[extensions.IMPLEMENTATION] = 'test_routing.Resource'
 
-
-def test_generate_routes(spec_dict):
-    spec = create_spec_from_dict(spec_dict)
+    spec = create_spec_from_dict(petstore_dict)
     routes = list(generate_routes(spec, base_module='tests'))
-    assert routes == [('/path1', Resource)]
+    assert routes == [('/api/v1/pets', Resource)]
