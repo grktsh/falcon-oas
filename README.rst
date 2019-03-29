@@ -85,6 +85,18 @@ Here is the part of its OpenAPI 3 document in YAML:
 
 Also ``x-falcon-oas-implementation`` associates Security Scheme Object and the access control function so that falcon-oas automatically handles Security Requirement Object in each request. See ``falcon_oas.extensions`` for details.
 
+``req.context['oas']``
+----------------------
+
+``req.context['oas'].user``
+    Authorized user.
+
+``req.context['oas'].parameters``
+    Unmarshaled request parameters in dict.
+
+``req.context['oas'].request_body``
+    Unmarshaled request body.
+
 Problems
 --------
 
