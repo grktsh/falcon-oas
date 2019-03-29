@@ -18,7 +18,7 @@ Prerequisites
 
 - Validated OpenAPI 3 document
 
-  - OpenAPI 3 document should be validated in advance just like the source code is tested in advance.
+  - falcon-oas does not validate OpenAPI 3 document itself at runtime.  It should be validated in advance.
 
 Features
 --------
@@ -29,28 +29,6 @@ Features
 
 Example
 -------
-
-If there is the following Falcon API implementation:
-
-.. code:: python
-
-    class PetItem:
-        def on_get(self, req, resp, pet_id):
-            pet = get_pet_by_id(pet_id)
-            resp.media = pet.to_dict()
-
-        def on_delete(self, req, resp, pet_id):
-            if not is_valid_api_key(req.get_header('X-API-Key')):
-                raise falcon.HTTPForbidden()
-
-            delete_pet_by_id(pet_id)
-            resp.status = falcon.HTTP_NO_CONTENT
-
-
-    api = falcon.API()
-    api.add_route('/api/v1/pets/{pet_id:int}', PetItem())
-
-Here is the falcon-oas implementation:
 
 .. code:: python
 
@@ -68,7 +46,7 @@ Here is the falcon-oas implementation:
         spec_dict = json.load(f)
     api = falcon_oas.OAS(spec_dict).create_api()
 
-and the part of its OpenAPI 3 document:
+Here is the part of its OpenAPI 3 document in YAML:
 
 .. code:: yaml
 
@@ -98,6 +76,10 @@ and the part of its OpenAPI 3 document:
           type: apiKey
           name: X-API-Key
           in: header
+
+``pet_id`` path parameters are unmarshaled to ``int`` without `Field Converters <https://falcon.readthedocs.io/en/stable/api/routing.html#field-converters>`_ since it is defined as ``integer`` type.
+
+``DELETE /api/v1/pets/{pet_id}`` requests are protected by the ``api_key`` security scheme.  The corresponding responder is processed only if it grants the request.
 
 ``x-falcon-oas-implementation`` associates Path Item Object and the REST resource class in Falcon so that falcon-oas automatically calls ``falcon.API.add_route`` with its path and the resource instance.
 
