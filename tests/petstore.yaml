@@ -1,0 +1,126 @@
+openapi: 3.0.2
+info:
+  title: Petstore
+  version: 0.1.0
+servers:
+- url: /api
+paths:
+  /v1/pets:
+    get:
+      responses:
+        '200':
+          description: Pet list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetNew'
+        required: true
+      responses:
+        '201':
+          description: Success creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+      security:
+      - session: []
+  /v1/pets/{pet_id}:
+    get:
+      responses:
+        '200':
+          description: Pet detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: X-API-Version
+        in: header
+        schema:
+          type: string
+      - name: tracking
+        in: cookie
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetUpdate'
+        required: true
+      responses:
+        '200':
+          description: Pet detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      responses:
+        '204':
+          description: Success deletion
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - session: []
+    parameters:
+    - $ref: '#/components/parameters/pet_id'
+components:
+  parameters:
+    pet_id:
+      name: pet_id
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    NotFound:
+      description: Not Found
+    ValidationError:
+      description: Validation Error
+  schemas:
+    Pet:
+      allOf:
+      - type: object
+        required:
+        - id
+        properties:
+          id:
+            type: integer
+            format: int64
+      - $ref: '#/components/schemas/PetNew'
+    PetNew:
+      allOf:
+      - $ref: '#/components/schemas/PetUpdate'
+      - type: object
+        required:
+        - name
+    PetUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+  securitySchemes:
+    session:
+      type: apiKey
+      name: session
+      in: cookie

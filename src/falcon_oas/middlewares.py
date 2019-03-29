@@ -4,9 +4,15 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import falcon
+from six import iteritems
 
-from ..oas.request.models import Request
-from ..utils import cached_property
+from . import extensions
+from .oas.request.models import Request
+from .oas.request.unmarshalers import unmarshal_request
+from .oas.schema.unmarshalers import SchemaUnmarshaler
+from .oas.security import AccessControl
+from .utils import cached_property
+from .utils import import_string
 
 
 class _Indexer(object):
@@ -79,21 +85,20 @@ class _RequestAdapter(Request):
 
 
 class _Context(object):
-    __slots__ = ('operation', 'request', 'user', 'parameters', 'request_body')
+    __slots__ = ('user', 'parameters', 'request_body')
 
-    def __init__(
-        self, operation, request, user=None, parameters=None, request_body=None
-    ):
-        self.operation = operation
-        self.request = request
+    def __init__(self, user, parameters, request_body):
         self.user = user
         self.parameters = parameters
         self.request_body = request_body
 
 
-class OperationMiddleware(object):
-    def __init__(self, spec):
+class Middleware(object):
+    def __init__(self, spec, formats=None, base_module=''):
         self._spec = spec
+        security_schemes = _get_security_schemes(spec, base_module=base_module)
+        self._access_control = AccessControl(security_schemes)
+        self._schema_unmarshaler = SchemaUnmarshaler(formats=formats)
 
     def process_resource(self, req, resp, resource, params):
         oas_req = _RequestAdapter(req, params)
@@ -101,5 +106,30 @@ class OperationMiddleware(object):
         operation = self._spec.get_operation(
             oas_req.uri_template, oas_req.method, oas_req.media_type
         )
+        if operation is None:
+            return
 
-        req.context['oas'] = operation and _Context(operation, oas_req)
+        user = self._access_control.handle(oas_req, operation)
+
+        parameters, request_body = unmarshal_request(
+            self._schema_unmarshaler, oas_req, operation
+        )
+        if 'path' in parameters:
+            params.update(parameters['path'])
+
+        req.context['oas'] = _Context(user, parameters, request_body)
+
+
+def _get_security_schemes(spec, base_module=''):
+    security_schemes = spec.get_security_schemes()
+    return security_schemes and {
+        key: (
+            security_scheme,
+            import_string(
+                security_scheme[extensions.IMPLEMENTATION],
+                base_module=base_module,
+            ),
+        )
+        for key, security_scheme in iteritems(security_schemes)
+        if extensions.IMPLEMENTATION in security_scheme
+    }

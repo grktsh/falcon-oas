@@ -5,14 +5,10 @@ from __future__ import unicode_literals
 
 import falcon
 
-from .middlewares.operation import OperationMiddleware
-from .middlewares.request_unmarshal import RequestUnmarshalMiddleware
-from .middlewares.security import get_security_schemes
-from .middlewares.security import SecurityMiddleware
+from .middlewares import Middleware
 from .oas.exceptions import SecurityError
 from .oas.exceptions import UndocumentedMediaType
 from .oas.exceptions import UnmarshalError
-from .oas.schema.unmarshalers import SchemaUnmarshaler
 from .oas.spec import create_spec_from_dict
 from .problems import http_error_handler
 from .problems import security_error_handler
@@ -40,21 +36,15 @@ class OAS(object):
 
     def create_api(self, **options):
         if 'middleware' not in options:
-            options['middleware'] = self.middlewares
+            options['middleware'] = self.middleware
 
         return self.setup(self.api_factory(**options))
 
     @property
-    def middlewares(self):
-        security_schemes = get_security_schemes(
-            self.spec, base_module=self.base_module
+    def middleware(self):
+        return Middleware(
+            self.spec, formats=self.formats, base_module=self.base_module
         )
-        schema_unmarshaler = SchemaUnmarshaler(formats=self.formats)
-        return [
-            OperationMiddleware(self.spec),
-            SecurityMiddleware(security_schemes),
-            RequestUnmarshalMiddleware(schema_unmarshaler),
-        ]
 
     def setup(self, api):
         api.req_options.auto_parse_qs_csv = False
