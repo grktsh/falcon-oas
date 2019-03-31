@@ -7,7 +7,6 @@ from jsonschema import Draft4Validator
 from jsonschema import validators
 
 from ..exceptions import ValidationError
-from .formats import default_formats
 
 _type_draft4_validator = Draft4Validator.VALIDATORS['type']
 
@@ -24,14 +23,10 @@ _Validator = validators.extend(Draft4Validator, {'type': _type_validator})
 
 
 class SchemaValidator(object):
-    def __init__(self, formats=None):
-        if formats is None:
-            formats = default_formats
-
-        self._format_checker = formats.format_checker
+    def __init__(self, schema, format_checker=None):
+        self._validator = _Validator(schema, format_checker=format_checker)
 
     def validate(self, instance, schema):
-        validator = _Validator(schema, format_checker=self._format_checker)
-        errors = list(validator.iter_errors(instance))
+        errors = list(self._validator.iter_errors(instance, schema))
         if errors:
             raise ValidationError(errors)

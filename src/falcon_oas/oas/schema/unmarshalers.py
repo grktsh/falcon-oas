@@ -6,29 +6,33 @@ from __future__ import unicode_literals
 from six import iteritems
 
 from ..exceptions import ValidationError
+from ..utils import cached_property
 from .formats import default_formats
 from .validators import SchemaValidator
 
 
 class SchemaUnmarshaler(object):
-    def __init__(self, formats=None):
+    def __init__(self, spec=None, formats=None):
         if formats is None:
             formats = default_formats
 
+        self._spec = spec
         self._formats = formats
-        self._validate = SchemaValidator(formats=formats).validate
-        self._unmarshalers = {
-            'array': self._unmarshal_array,
-            'object': self._unmarshal_object,
-        }
 
     def unmarshal(self, instance, schema):
         """Validate and unmarshal the instance with the schema.
 
         :meth:`~._unmarshal` can assume the validated instance.
         """
-        self._validate(instance, schema)
+        self._validator.validate(instance, schema)
         return self._unmarshal(instance, schema)
+
+    @cached_property
+    def _validator(self):
+        return SchemaValidator(
+            self._spec.data if self._spec is not None else {},
+            format_checker=self._formats.format_checker,
+        )
 
     def _unmarshal(self, instance, schema):
         if instance is None:
@@ -53,8 +57,9 @@ class SchemaUnmarshaler(object):
         try:
             handler = self._unmarshalers[schema['type']]
         except KeyError:
-            handler = self._unmarshal_primitive
-        return handler(instance, schema)
+            return instance
+        else:
+            return handler(self, instance, schema)
 
     def _unmarshal_array(self, instance, schema):
         # ``items`` MUST be present if the ``type`` is ``array``.
@@ -89,3 +94,12 @@ class SchemaUnmarshaler(object):
             return instance
         else:
             return modifier(instance)
+
+    _unmarshalers = {
+        'integer': _unmarshal_primitive,
+        'number': _unmarshal_primitive,
+        'boolean': _unmarshal_primitive,
+        'string': _unmarshal_primitive,
+        'array': _unmarshal_array,
+        'object': _unmarshal_object,
+    }
