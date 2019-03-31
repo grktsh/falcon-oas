@@ -10,7 +10,7 @@ from .utils import import_string
 
 
 def generate_routes(spec, base_module=''):
-    for path, path_item in iteritems(spec.spec_dict['paths']):
+    for path, path_item in iteritems(spec['paths']):
         try:
             resource_name = path_item[extensions.IMPLEMENTATION]
         except KeyError:

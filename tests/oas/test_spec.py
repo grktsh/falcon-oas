@@ -20,7 +20,7 @@ def media_type():
 def test_create_spec_from_dict(petstore_dict):
     spec = create_spec_from_dict(petstore_dict)
 
-    schemas = spec.spec_dict['components']['schemas']
+    schemas = spec['components']['schemas']
     assert schemas['PetNew']['allOf'][0] == schemas['PetUpdate']
 
 
@@ -43,7 +43,7 @@ def test_spec_get_operation_request_body_and_security(
     petstore_dict, media_type
 ):
     spec = create_spec_from_dict(petstore_dict)
-    schemas = spec.spec_dict['components']['schemas']
+    schemas = spec['components']['schemas']
 
     operation = spec.get_operation('/api/v1/pets', 'post', media_type)
     assert operation['parameters'] == []
@@ -75,7 +75,7 @@ def test_spec_get_operation_undocumented_operation():
 
 def test_spec_get_security_schemes(petstore_dict):
     spec = create_spec_from_dict(petstore_dict)
-    components = spec.spec_dict['components']
+    components = spec['components']
 
     assert spec.get_security_schemes() == components['securitySchemes']
 

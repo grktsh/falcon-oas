@@ -23,10 +23,11 @@ def create_spec_from_dict(spec_dict, base_path=None):
 
 class Spec(object):
     def __init__(self, spec_dict, base_path=None):
-        self.spec_dict = spec_dict
-        self.base_path = (
-            base_path if base_path is not None else _get_base_path(spec_dict)
-        )
+        if base_path is None:
+            base_path = _get_base_path(spec_dict)
+
+        self.data = spec_dict
+        self.base_path = base_path
         self._base_security = _get_security(spec_dict)
 
     @lru_cache(maxsize=None)
@@ -37,7 +38,7 @@ class Spec(object):
         path = uri_template[len(self.base_path) :]
         try:
             # ``paths`` is required in OpenAPI Object.
-            path_item = self.spec_dict['paths'][path]
+            path_item = self.data['paths'][path]
             operation = path_item[method]
         except KeyError:
             return None
@@ -59,7 +60,7 @@ class Spec(object):
 
     def get_security_schemes(self):
         try:
-            return self.spec_dict['components']['securitySchemes']
+            return self.data['components']['securitySchemes']
         except KeyError:
             return None
 
@@ -88,6 +89,9 @@ class Spec(object):
                     continue
                 seen.add(key)
                 yield parameter_spec_dict
+
+    def __getitem__(self, key):
+        return self.data[key]
 
 
 def _get_base_path(spec_dict):
