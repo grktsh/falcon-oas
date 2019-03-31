@@ -11,7 +11,7 @@ from .oas.request.models import Request
 from .oas.request.unmarshalers import unmarshal_request
 from .oas.schema.unmarshalers import SchemaUnmarshaler
 from .oas.security import AccessControl
-from .utils import cached_property
+from .oas.utils import cached_property
 from .utils import import_string
 
 
