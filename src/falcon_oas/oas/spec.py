@@ -16,18 +16,15 @@ from six.moves.urllib_parse import urlparse
 from .exceptions import UndocumentedMediaType
 
 
-def create_spec_from_dict(spec_dict, base_path=None):
+def create_spec_from_dict(spec_dict):
     deref_spec_dict = jsonref.JsonRef.replace_refs(spec_dict)
-    return Spec(copy.deepcopy(deref_spec_dict), base_path=base_path)
+    return Spec(copy.deepcopy(deref_spec_dict))
 
 
 class Spec(object):
-    def __init__(self, spec_dict, base_path=None):
-        if base_path is None:
-            base_path = _get_base_path(spec_dict)
-
+    def __init__(self, spec_dict):
         self.data = spec_dict
-        self.base_path = base_path
+        self.base_path = _get_base_path(spec_dict)
         self._base_security = _get_security(spec_dict)
 
     @lru_cache(maxsize=None)

@@ -24,11 +24,10 @@ class OAS(object):
         spec_dict,
         formats=None,
         base_module='',
-        base_path=None,
         api_factory=falcon.API,
         problems=True,
     ):
-        self.spec = create_spec_from_dict(spec_dict, base_path=base_path)
+        self.spec = create_spec_from_dict(spec_dict)
         self.formats = formats
         self.base_module = base_module
         self.api_factory = api_factory
