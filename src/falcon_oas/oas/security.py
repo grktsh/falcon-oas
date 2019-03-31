@@ -15,7 +15,7 @@ class AccessControl(object):
     def handle(self, request, operation):
         if self._security_schemes and operation['security']:
             # ``requirement`` is a alternative security requirement
-            # object.  Only one of the security requirement objects
+            # object. Only one of the security requirement objects
             # need to be satisfied to authorize a request.
             for requirement in operation['security']:
                 user = self._satisfy_requirement(request, requirement)

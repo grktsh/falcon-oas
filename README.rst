@@ -38,7 +38,7 @@ Example
             resp.media = pet.to_dict()
 
         def on_delete(self, req, resp, pet_id):
-            pet = delete_pet_by_id(int(pet_id))
+            pet = delete_pet_by_id(pet_id)
             resp.status = falcon.HTTP_NO_CONTENT
 
 
@@ -77,9 +77,9 @@ Here is the part of its OpenAPI 3 document in YAML:
           name: X-API-Key
           in: header
 
-``pet_id`` path parameters are unmarshaled to ``int`` without `Field Converters <https://falcon.readthedocs.io/en/stable/api/routing.html#field-converters>`_ since it is defined as ``integer`` type.
+``pet_id`` path parameter is unmarshaled to ``int`` without `Field Converters <https://falcon.readthedocs.io/en/stable/api/routing.html#field-converters>`_ since it is defined as ``integer`` type.
 
-``DELETE /api/v1/pets/{pet_id}`` requests are protected by the ``api_key`` security scheme.  The corresponding responder is processed only if it grants the request.
+``DELETE /api/v1/pets/{pet_id}`` requests are protected by the ``api_key`` security scheme. The corresponding responder is processed only if it grants the request. Otherwise, 403 Forbidden error occurs automatically.
 
 ``x-falcon-oas-implementation`` associates Path Item Object and the REST resource class in Falcon so that falcon-oas automatically calls ``falcon.API.add_route`` with its path and the resource instance.
 

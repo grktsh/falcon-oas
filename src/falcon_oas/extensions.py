@@ -22,14 +22,11 @@ from __future__ import unicode_literals
 #:                 schema:
 #:                   $ref: '#/components/schemas/PetList'
 #:
-#: :func:`~.routing.generate_routes` yields tuples of the uri template
-#: and the Falcon resource class.  Using
-#: :func:`~.routing.generate_routes`, :class:`~.OAS`
-#: calls ``falcon.API.add__route`` with ``/v1/pets`` and an instance of
-#: ``api.v1.pets.Collection`` automatically in this case.
+#: falcon-oas calls ``falcon.API.add__route`` with ``/v1/pets`` and an
+#: instance of``api.v1.pets.Collection`` automatically in this case.
 #:
 #: Security Scheme Object can be associated to access control
-#: callable:
+#: function:
 #:
 #: .. code:: yaml
 #:
@@ -39,21 +36,20 @@ from __future__ import unicode_literals
 #:     in: cookie
 #:
 #: When Operation Object defines Security Requirement Object directly
-#: or indirectly from top-level ``security``,
-#: :class:`~.middlewares.security.SecurityMiddleware` calls
-#: the access control callable with the value of ``session`` cookie,
+#: or indirectly from top-level ``security``, falcon-oas calls
+#: the access control function with the value of ``session`` cookie,
 #: the scopes of Security Requirement Object and an instance of
-#: :class:`~.oas.Request`.
+#: :class:`~.oas.Request` in this case.
 #:
-#: The access control callable should return:
+#: The access control function should return:
 #:
 #: ``True``
 #:     Allow the access.
 #:
 #: Truthy value other than ``True`` as authenticated user
-#:     Allow the access.  The return value is stored as
+#:     Allow the access. The return value is stored as
 #:     ``req.context['oas'].user``.
 #:
 #: Falsy value
-#:     Deny the access.  403 Forbidden is raised.
+#:     Deny the access. 403 Forbidden error occurs.
 IMPLEMENTATION = 'x-falcon-oas-implementation'
