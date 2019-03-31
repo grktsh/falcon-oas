@@ -9,6 +9,7 @@ import datetime
 import pytest
 
 from falcon_oas.oas.exceptions import ValidationError
+from falcon_oas.oas.schema.formats import Formats
 from falcon_oas.oas.schema.unmarshalers import SchemaUnmarshaler
 
 
@@ -49,7 +50,9 @@ def test_unmarshal_primitive_format():
 def test_unmarshal_primitive_without_formats():
     schema = {'type': 'string', 'format': 'date'}
     instance = '2018-01-02'
-    unmarshaled = SchemaUnmarshaler(formats={}).unmarshal(instance, schema)
+    unmarshaled = SchemaUnmarshaler(formats=Formats()).unmarshal(
+        instance, schema
+    )
     assert unmarshaled == instance
 
 

@@ -4,19 +4,18 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from six import iteritems
-from six import itervalues
 
 from ..exceptions import ValidationError
-from .formats import DEFAULT_FORMATS
+from .formats import default_formats
 from .validators import SchemaValidator
 
 
 class SchemaUnmarshaler(object):
     def __init__(self, formats=None):
         if formats is None:
-            formats = DEFAULT_FORMATS
+            formats = default_formats
 
-        self._formats = _flatten_formats(formats)
+        self._formats = formats
         self._validate = SchemaValidator(formats=formats).validate
         self._unmarshalers = {
             'array': self._unmarshal_array,
@@ -90,11 +89,3 @@ class SchemaUnmarshaler(object):
             return instance
         else:
             return modifier(instance)
-
-
-def _flatten_formats(formats):
-    return {
-        name: modifier
-        for type_formats in itervalues(formats)
-        for name, modifier in iteritems(type_formats)
-    }

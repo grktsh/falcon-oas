@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 import pytest
 
+from falcon_oas.oas.schema.formats import Formats
 from falcon_oas.oas.schema.validators import SchemaValidator
 from falcon_oas.oas.schema.validators import ValidationError
 
@@ -89,7 +90,7 @@ def test_validate_format_error_without_format_checker():
     schema = {'type': 'string', 'format': 'date'}
     instance = '2018/01/02'
     try:
-        SchemaValidator(formats={}).validate(instance, schema)
+        SchemaValidator(formats=Formats()).validate(instance, schema)
     except ValidationError as e:
         pytest.fail('Unexpected error: {}'.format(e))
 

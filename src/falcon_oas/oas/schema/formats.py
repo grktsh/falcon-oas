@@ -8,21 +8,47 @@ import binascii
 import datetime
 import functools
 
+import jsonschema
+from six import integer_types
+from six import string_types
 
-def raises(error):
-    """Return a decorator to wrap the error with ValueError."""
+_primitive_types = {
+    'integer': integer_types,
+    'number': float,
+    'boolean': bool,
+    'string': string_types,
+}
 
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except error as e:
-                raise ValueError(e)
 
-        return wrapper
+class Formats(object):
+    def __init__(self):
+        self.format_checker = jsonschema.FormatChecker(formats=())
+        self._modifiers = {}
 
-    return decorator
+    def register(self, name, schema_type, raises=()):
+        types = _primitive_types[schema_type]
+
+        def decorator(modifier):
+            @self.format_checker.checks(name, raises=raises)
+            def func(instance):
+                if not isinstance(instance, types):
+                    # Let type validator handle the type error.
+                    return True
+                modifier(instance)
+                return True
+
+            self._modifiers[name] = modifier
+            return modifier
+
+        return decorator
+
+    def __getitem__(self, name):
+        return self._modifiers[name]
+
+
+default_formats = Formats()
+
+_register = default_formats.register
 
 
 def bounded(value, min_value, max_value):
@@ -35,28 +61,21 @@ def bounded(value, min_value, max_value):
     return value
 
 
+_register('int32', 'integer', raises=ValueError)(
+    functools.partial(bounded, min_value=-2 ** 31, max_value=2 ** 31 - 1)
+)
+_register('int64', 'integer', raises=ValueError)(
+    functools.partial(bounded, min_value=-2 ** 63, max_value=2 ** 63 - 1)
+)
+_register('byte', 'string', raises=(ValueError, TypeError))(base64.b64decode)
+_register('binary', 'string', raises=(ValueError, TypeError))(
+    binascii.unhexlify
+)
+
+
+@_register('date', 'string', raises=ValueError)
 def parse_date(value):
     return datetime.datetime.strptime(value, '%Y-%m-%d').date()
-
-
-#: The format modifier/validator can assume the type of the value is
-#: valid and modify it to any type.  When it raises ValueError it will
-#: be handled as ``format`` error by jsonschema.
-DEFAULT_FORMATS = {
-    'integer': {
-        'int32': functools.partial(
-            bounded, min_value=-2 ** 31, max_value=2 ** 31 - 1
-        ),
-        'int64': functools.partial(
-            bounded, min_value=-2 ** 63, max_value=2 ** 63 - 1
-        ),
-    },
-    'string': {
-        'date': parse_date,
-        'byte': raises(TypeError)(base64.b64decode),
-        'binary': raises(TypeError)(binascii.unhexlify),
-    },
-}
 
 
 try:
@@ -64,8 +83,8 @@ try:
 except ImportError:  # pragma: no cover
     pyrfc3339 = None
 else:
-    DEFAULT_FORMATS['string']['date-time'] = functools.partial(
-        pyrfc3339.parse, utc=True
+    _register('date-time', 'string', raises=ValueError)(
+        functools.partial(pyrfc3339.parse, utc=True)
     )
 
 try:
@@ -74,7 +93,7 @@ except ImportError:  # pragma: no cover
     rfc3986 = None
 else:
 
-    @raises(rfc3986.exceptions.RFC3986Exception)
+    @_register('uri', 'string', raises=rfc3986.exceptions.RFC3986Exception)
     def parse_uri(value):
         uri = rfc3986.uri_reference(value)
         validator = rfc3986.validators.Validator().require_presence_of(
@@ -82,5 +101,3 @@ else:
         )
         validator.validate(uri)
         return value
-
-    DEFAULT_FORMATS['string']['uri'] = parse_uri
