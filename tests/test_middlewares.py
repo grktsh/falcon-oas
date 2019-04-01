@@ -22,10 +22,12 @@ USER = object()
 
 
 def api_key_validator(value, scopes, request):
+    assert 'oas' in request.context
     return value == 'secret'
 
 
 def session_cookie_loader(value, scopes, request):
+    assert 'oas' in request.context
     return value and USER
 
 

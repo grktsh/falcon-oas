@@ -85,13 +85,15 @@ class _RequestAdapter(Request):
 
 
 class _Context(object):
-    __slots__ = ('user', 'parameters', 'request_body', 'schema_unmarshaler')
+    __slots__ = ('schema_unmarshaler', 'user', 'parameters', 'request_body')
 
-    def __init__(self, user, parameters, request_body, schema_unmarshaler):
+    def __init__(
+        self, schema_unmarshaler, user=None, parameters=None, request_body=None
+    ):
+        self.schema_unmarshaler = schema_unmarshaler
         self.user = user
         self.parameters = parameters
         self.request_body = request_body
-        self.schema_unmarshaler = schema_unmarshaler
 
 
 class Middleware(object):
@@ -110,20 +112,22 @@ class Middleware(object):
         if operation is None:
             return
 
-        user = self._access_control.handle(oas_req, operation)
-
         schema_unmarshaler = SchemaUnmarshaler(
             spec=self._spec, formats=self._formats
         )
+        req.context['oas'] = context = _Context(schema_unmarshaler)
+
+        user = self._access_control.handle(oas_req, operation)
+
         parameters, request_body = unmarshal_request(
             schema_unmarshaler, oas_req, operation
         )
         if 'path' in parameters:
             params.update(parameters['path'])
 
-        req.context['oas'] = _Context(
-            user, parameters, request_body, schema_unmarshaler
-        )
+        context.user = user
+        context.parameters = parameters
+        context.request_body = request_body
 
 
 def _get_security_schemes(spec, base_module=''):
