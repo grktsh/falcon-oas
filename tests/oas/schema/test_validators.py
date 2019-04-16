@@ -37,6 +37,18 @@ def test_validate_error(validator):
     assert exc_info.value.errors[0].message == message
 
 
+def test_validate_enum_error(validator):
+    schema = {'type': str('string'), 'enum': [str('a'), str('b')]}
+    instance = str('c')
+    message = "'c' is not one of ['a', 'b']"
+
+    with pytest.raises(ValidationError) as exc_info:
+        validator.validate(instance, schema)
+
+    assert len(exc_info.value.errors) == 1
+    assert exc_info.value.errors[0].message == message
+
+
 def test_validate_format_string(validator):
     schema = {'type': 'string', 'format': 'date'}
     instance = '2018-01-02'

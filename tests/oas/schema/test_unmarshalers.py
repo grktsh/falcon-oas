@@ -56,6 +56,13 @@ def test_unmarshal_primitive_without_formats():
     assert unmarshaled == instance
 
 
+def test_unmarshal_primitive_enum():
+    schema = {'type': 'string', 'enum': ['a', 'b']}
+    instance = 'a'
+    unmarshaled = SchemaUnmarshaler().unmarshal(instance, schema)
+    assert unmarshaled == 'a'
+
+
 def test_unmarshal_array():
     schema = {'type': 'array', 'items': {'type': 'string', 'format': 'date'}}
     instance = ['2018-01-02', '2018-02-03', '2018-03-04']
@@ -164,6 +171,7 @@ def test_unmarshal_one_of_or_any_of(schema_type):
         {'type': 'array', 'nullable': True},
         {'type': 'object', 'nullable': True},
         {'type': 'string', 'format': 'date', 'nullable': True},
+        {'type': 'string', 'enum': ['a', 'b'], 'nullable': True},
     ],
 )
 def test_unmarshal_nullable(schema):
