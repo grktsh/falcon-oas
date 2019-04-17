@@ -19,7 +19,20 @@ def _type_validator(validator, types, instance, schema):
         yield error
 
 
-_Validator = validators.extend(Draft4Validator, {'type': _type_validator})
+_enum_draft4_validator = Draft4Validator.VALIDATORS['enum']
+
+
+def _enum_validator(validator, enums, instance, schema):
+    if instance is None and schema.get('nullable'):
+        return
+
+    for error in _enum_draft4_validator(validator, enums, instance, schema):
+        yield error
+
+
+_Validator = validators.extend(
+    Draft4Validator, {'type': _type_validator, 'enum': _enum_validator}
+)
 
 
 class SchemaValidator(object):
