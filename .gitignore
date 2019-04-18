@@ -3,7 +3,6 @@
 
 /.coverage
 /.tox/
-/coverage.xml
 /build/
 /dist/
 /src/falcon_oas/__version__.py
