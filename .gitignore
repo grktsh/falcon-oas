@@ -2,7 +2,6 @@
 *.egg-info/
 
 /.coverage
-/.eggs/
 /.tox/
 /coverage.xml
 /build/
