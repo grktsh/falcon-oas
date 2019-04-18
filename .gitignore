@@ -5,4 +5,5 @@
 /.tox/
 /build/
 /dist/
+/pip-wheel-metadata/
 /src/falcon_oas/__version__.py
