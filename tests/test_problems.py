@@ -7,8 +7,8 @@ from __future__ import unicode_literals
 import falcon
 import jsonschema
 from falcon import testing
+from oas.exceptions import UnmarshalError
 
-from falcon_oas.oas.exceptions import UnmarshalError
 from falcon_oas.problems import _Problem
 from falcon_oas.problems import serialize_problem
 from falcon_oas.problems import UNMARSHAL_PROBLEM_TYPE_URI

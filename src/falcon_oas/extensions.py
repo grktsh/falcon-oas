@@ -39,7 +39,7 @@ from __future__ import unicode_literals
 #: or indirectly from top-level ``security``, falcon-oas calls
 #: the access control function with the value of ``session`` cookie,
 #: the scopes of Security Requirement Object and an instance of
-#: :class:`~.oas.Request` in this case.
+#: :class:`oas.Request` in this case.
 #:
 #: The access control function should return:
 #:

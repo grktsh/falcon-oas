@@ -4,12 +4,12 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import falcon
+from oas import create_spec_from_dict
+from oas.exceptions import UndocumentedMediaType
+from oas.exceptions import UnmarshalError
 
+from .exceptions import SecurityError
 from .middlewares import Middleware
-from .oas.exceptions import SecurityError
-from .oas.exceptions import UndocumentedMediaType
-from .oas.exceptions import UnmarshalError
-from .oas.spec import create_spec_from_dict
 from .problems import http_error_handler
 from .problems import security_error_handler
 from .problems import serialize_problem
