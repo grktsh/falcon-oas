@@ -22,7 +22,7 @@ from __future__ import unicode_literals
 #:                 schema:
 #:                   $ref: '#/components/schemas/PetList'
 #:
-#: falcon-oas calls ``falcon.API.add__route`` with ``/v1/pets`` and an
+#: falcon-oas calls ``falcon.API.add_route`` with ``/v1/pets`` and an
 #: instance of``api.v1.pets.Collection`` automatically in this case.
 #:
 #: Security Scheme Object can be associated to access control
