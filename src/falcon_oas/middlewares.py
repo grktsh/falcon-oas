@@ -4,14 +4,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import falcon
+from oas import Request
+from oas import unmarshal_request
+from oas.schema.unmarshalers import SchemaUnmarshaler
+from oas.utils import cached_property
 from six import iteritems
 
 from . import extensions
-from .oas.request.models import Request
-from .oas.request.unmarshalers import unmarshal_request
-from .oas.schema.unmarshalers import SchemaUnmarshaler
-from .oas.security import AccessControl
-from .oas.utils import cached_property
+from .security import AccessControl
 from .utils import import_string
 
 

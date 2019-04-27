@@ -6,8 +6,8 @@ from __future__ import unicode_literals
 
 import pytest
 
-from falcon_oas.oas.exceptions import SecurityError
-from falcon_oas.oas.security import AccessControl
+from falcon_oas.exceptions import SecurityError
+from falcon_oas.security import AccessControl
 
 user = object()
 

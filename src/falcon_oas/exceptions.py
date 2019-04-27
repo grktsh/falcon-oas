@@ -3,4 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .request.models import Request  # noqa: F401
+from oas.exceptions import Error
+
+
+class SecurityError(Error):
+    pass
