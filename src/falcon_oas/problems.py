@@ -3,6 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from collections import OrderedDict
+
 import falcon
 
 
@@ -14,38 +16,50 @@ UNMARSHAL_PROBLEM_TYPE_URI = (
 )
 
 
-class _Problem(falcon.HTTPError):
-    """Represent predefined problem type of RFC 7807."""
+class Problem(falcon.HTTPError):
+    def __init__(
+        self,
+        status,
+        title=None,
+        description=None,
+        headers=None,
+        code=None,
+        type_uri=None,
+        additional_members=None,
+    ):
+        if title == status:
+            title = status[4:]
 
-    def __init__(self, http_error):
-        super(_Problem, self).__init__(
-            http_error.status,
-            title=http_error.title,
-            description=http_error.description,
+        super(Problem, self).__init__(
+            status,
+            title=title,
+            description=description,
+            headers=headers,
+            code=code,
+        )
+        self.type_uri = type_uri
+        self.additional_members = additional_members
+
+    @classmethod
+    def from_http_error(cls, error):
+        return cls(
+            error.status,
+            title=error.title,
+            description=error.description,
+            headers=error.headers,
+            code=error.code,
         )
 
     def to_dict(self, obj_type=dict):
         obj = obj_type()
-        obj['title'] = self.status[4:]
+        if self.type_uri is not None:
+            obj['type'] = self.type_uri
+        obj['title'] = self.title
         obj['status'] = int(self.status[:3])
         if self.description is not None:
             obj['detail'] = self.description
-        return obj
-
-
-class UnmarshalProblem(falcon.HTTPError):
-    def __init__(self, unmarshal_error):
-        super(UnmarshalProblem, self).__init__(
-            falcon.HTTP_BAD_REQUEST, title='Unmarshal Error'
-        )
-        self.unmarshal_error = unmarshal_error
-
-    def to_dict(self, obj_type=dict):
-        obj = obj_type()
-        obj['type'] = UNMARSHAL_PROBLEM_TYPE_URI
-        obj['title'] = self.title
-        obj['status'] = int(self.status[:3])
-        obj.update(self.unmarshal_error.to_dict(obj_type=obj_type))
+        if self.additional_members is not None:
+            obj.update(obj_type(self.additional_members))
         return obj
 
 
@@ -63,16 +77,21 @@ def serialize_problem(req, resp, problem):
 
 
 def http_error_handler(error, req, resp, params):
-    raise _Problem(error)
+    raise Problem.from_http_error(error)
 
 
 def undocumented_media_type_handler(error, req, resp, params):
-    raise _Problem(falcon.HTTPBadRequest())
+    raise Problem.from_http_error(falcon.HTTPBadRequest())
 
 
 def security_error_handler(error, req, resp, params):
-    raise _Problem(falcon.HTTPForbidden())
+    raise Problem.from_http_error(falcon.HTTPForbidden())
 
 
 def unmarshal_error_handler(error, req, resp, params):
-    raise UnmarshalProblem(error)
+    raise Problem(
+        falcon.HTTP_BAD_REQUEST,
+        title='Unmarshal Error',
+        type_uri=UNMARSHAL_PROBLEM_TYPE_URI,
+        additional_members=error.to_dict(obj_type=OrderedDict),
+    )
