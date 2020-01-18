@@ -1,6 +1,10 @@
 [build-system]
-requires = ['setuptools >= 40.7.0', 'setuptools_scm', 'wheel']
+requires = ['setuptools >= 42', 'setuptools_scm[toml] >= 3.4', 'wheel']
 build-backend = 'setuptools.build_meta'
+
+[tool.setuptools_scm]
+write_to = 'src/falcon_oas/__version__.py'
+write_to_template = "__version__ = '{version}'\n"
 
 [tool.black]
 target-version = ['py27', 'py35', 'py36', 'py37', 'py38']
