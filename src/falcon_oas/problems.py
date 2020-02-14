@@ -58,6 +58,8 @@ class Problem(falcon.HTTPError):
         obj['status'] = int(self.status[:3])
         if self.description is not None:
             obj['detail'] = self.description
+        if self.code is not None:
+            obj['code'] = self.code
         if self.additional_members is not None:
             obj.update(obj_type(self.additional_members))
         return obj
