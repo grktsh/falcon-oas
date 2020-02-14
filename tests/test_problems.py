@@ -19,21 +19,26 @@ from falcon_oas.problems import UNMARSHAL_PROBLEM_TYPE_URI
 def test_problem():
     title = 'title'
     description = 'description'
-    http_error = falcon.HTTPBadRequest(title=title, description=description)
+    code = 42
+    http_error = falcon.HTTPBadRequest(
+        title=title, description=description, code=code
+    )
     problem = Problem.from_http_error(http_error)
 
     assert isinstance(problem, falcon.HTTPError)
     assert problem.status == falcon.HTTP_BAD_REQUEST
     assert problem.title == title
     assert problem.description == description
+    assert problem.code == code
     assert problem.to_dict() == {
         'title': title,
         'status': 400,
         'detail': description,
+        'code': code,
     }
 
 
-def test_problem_to_dict_without_title_and_description():
+def test_problem_to_dict_without_optional():
     http_error = falcon.HTTPBadRequest()
     problem = Problem.from_http_error(http_error)
 
