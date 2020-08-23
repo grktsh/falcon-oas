@@ -97,10 +97,14 @@ class _Context(object):
 
 
 class Middleware(object):
-    def __init__(self, spec, formats=None, base_module=''):
+    def __init__(
+        self, spec, formats=None, base_module='', security_handlers=None
+    ):
         self._spec = spec
         self._formats = formats
-        security_schemes = _get_security_schemes(spec, base_module=base_module)
+        security_schemes = _get_security_schemes(
+            spec, base_module=base_module, handlers=security_handlers
+        )
         self._access_control = AccessControl(security_schemes)
 
     def process_resource(self, req, resp, resource, params):
@@ -130,16 +134,19 @@ class Middleware(object):
         context.request_body = request_body
 
 
-def _get_security_schemes(spec, base_module=''):
+def _get_security_schemes(spec, base_module='', handlers=None):
     security_schemes = spec.get_security_schemes()
+    security_handlers = handlers or {}
     return security_schemes and {
         key: (
             security_scheme,
-            import_string(
+            security_handlers.get(key)
+            or import_string(
                 security_scheme[extensions.IMPLEMENTATION],
                 base_module=base_module,
             ),
         )
         for key, security_scheme in iteritems(security_schemes)
-        if extensions.IMPLEMENTATION in security_scheme
+        if key in security_handlers
+        or extensions.IMPLEMENTATION in security_scheme
     }

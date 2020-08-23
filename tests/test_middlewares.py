@@ -52,10 +52,12 @@ def resource():
     return Resource()
 
 
-def create_app(spec_dict):
+def create_app(spec_dict, security_handlers=None):
     spec = create_spec_from_dict(spec_dict)
     app = falcon.API(
-        middleware=[falcon_oas.Middleware(spec)],
+        middleware=[
+            falcon_oas.Middleware(spec, security_handlers=security_handlers)
+        ],
         request_type=falcon_oas.Request,
     )
     return app
@@ -153,8 +155,59 @@ def test_security(resource, petstore_dict_with_implementation, headers, user):
     assert req.oas_user is user
 
 
+@pytest.mark.parametrize(
+    'headers,user',
+    [
+        ({'Cookie': str('session=1')}, USER),
+        ({'X-API-Key': str('secret')}, None),
+    ],
+)
+def test_security_with_security_handlers(
+    resource, petstore_dict, headers, user
+):
+    app = create_app(
+        petstore_dict,
+        security_handlers={
+            'api_key': api_key_validator,
+            'session': session_cookie_loader,
+        },
+    )
+    app.add_route('/api/v1/pets', resource)
+
+    client = testing.TestClient(app)
+
+    response = client.simulate_post(
+        path='/api/v1/pets', headers=headers, json={'name': 'momo'}
+    )
+
+    assert response.status == falcon.HTTP_OK
+    assert resource.called
+
+    req = resource.captured_req
+    assert req.context['oas'].user is user
+    assert req.oas_user is user
+
+
 def test_security_error(resource, petstore_dict_with_implementation):
     app = create_app(petstore_dict_with_implementation)
+    app.add_route('/api/v1/pets', resource)
+
+    client = testing.TestClient(app)
+
+    with pytest.raises(SecurityError):
+        client.simulate_post(path='/api/v1/pets', json={'name': 'momo'})
+
+    assert resource.called is False
+
+
+def test_security_error_with_security_handlers(resource, petstore_dict):
+    app = create_app(
+        petstore_dict,
+        security_handlers={
+            'api_key': api_key_validator,
+            'session': session_cookie_loader,
+        },
+    )
     app.add_route('/api/v1/pets', resource)
 
     client = testing.TestClient(app)
@@ -216,6 +269,24 @@ def test_get_security_schemes(petstore_dict_with_implementation):
     spec = create_spec_from_dict(spec_dict)
 
     result = _get_security_schemes(spec)
+    assert result == {
+        'api_key': (security_schemes['api_key'], api_key_validator),
+        'session': (security_schemes['session'], session_cookie_loader),
+    }
+
+
+def test_get_security_schemes_with_security_handlers(petstore_dict):
+    security_schemes = petstore_dict['components']['securitySchemes']
+
+    spec = create_spec_from_dict(petstore_dict)
+
+    result = _get_security_schemes(
+        spec,
+        handlers={
+            'api_key': api_key_validator,
+            'session': session_cookie_loader,
+        },
+    )
     assert result == {
         'api_key': (security_schemes['api_key'], api_key_validator),
         'session': (security_schemes['session'], session_cookie_loader),

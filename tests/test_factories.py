@@ -46,15 +46,20 @@ def spec_dict(petstore_dict):
     path_item = petstore_dict['paths']['/v1/pets/{pet_id}']
     path_item[extensions.IMPLEMENTATION] = 'test_factories.PetItem'
 
-    access_control = 'test_factories.session_cookie_loader'
-    security_scheme = petstore_dict['components']['securitySchemes']['session']
-    security_scheme[extensions.IMPLEMENTATION] = access_control
-
     return petstore_dict
 
 
-def test_oas_default(spec_dict):
-    api = OAS(spec_dict, base_module='tests').create_api()
+@pytest.fixture
+def spec_dict_with_security_loader(spec_dict):
+    access_control = 'test_factories.session_cookie_loader'
+    security_scheme = spec_dict['components']['securitySchemes']['session']
+    security_scheme[extensions.IMPLEMENTATION] = access_control
+
+    return spec_dict
+
+
+def test_oas_default(spec_dict_with_security_loader):
+    api = OAS(spec_dict_with_security_loader, base_module='tests').create_api()
 
     assert api.req_options.auto_parse_qs_csv is False
 
@@ -93,8 +98,10 @@ def test_oas_default(spec_dict):
     assert response.json == {'id': 42}
 
 
-def test_oas_disable_problems(spec_dict):
-    api = OAS(spec_dict, base_module='tests', problems=False).create_api()
+def test_oas_disable_problems(spec_dict_with_security_loader):
+    api = OAS(
+        spec_dict_with_security_loader, base_module='tests', problems=False
+    ).create_api()
     client = testing.TestClient(api)
 
     response = client.simulate_get(path='/')
@@ -106,8 +113,10 @@ def test_oas_disable_problems(spec_dict):
     assert response.headers['Content-Type'] == falcon.MEDIA_JSON
 
 
-def test_oas_without_middleware(spec_dict):
-    api = OAS(spec_dict, base_module='tests').create_api(middleware=None)
+def test_oas_without_middleware(spec_dict_with_security_loader):
+    api = OAS(spec_dict_with_security_loader, base_module='tests').create_api(
+        middleware=None
+    )
     client = testing.TestClient(api)
 
     response = client.simulate_get(path='/api/v1/pets/42')
@@ -115,4 +124,23 @@ def test_oas_without_middleware(spec_dict):
     assert response.json == {'id': '42'}
 
     response = client.simulate_delete(path='/api/v1/pets/42')
+    assert response.status == falcon.HTTP_NO_CONTENT
+
+
+def test_oas_with_security_handlers(spec_dict):
+    api = OAS(
+        spec_dict,
+        base_module='tests',
+        security_handlers={'session': session_cookie_loader},
+    ).create_api()
+    client = testing.TestClient(api)
+
+    # security error
+    response = client.simulate_delete(path='/api/v1/pets/42')
+    assert response.status == falcon.HTTP_FORBIDDEN
+    assert response.headers['Content-Type'] == 'application/problem+json'
+
+    response = client.simulate_delete(
+        path='/api/v1/pets/42', headers={'Cookie': str('session=1')}
+    )
     assert response.status == falcon.HTTP_NO_CONTENT

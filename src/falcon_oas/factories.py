@@ -26,12 +26,14 @@ class OAS(object):
         base_module='',
         api_factory=falcon.API,
         problems=True,
+        security_handlers=None,
     ):
         self.spec = create_spec_from_dict(spec_dict)
         self.formats = formats
         self.base_module = base_module
         self.api_factory = api_factory
         self.problems = problems
+        self.security_handlers = security_handlers
 
     def create_api(self, **options):
         if 'middleware' not in options:
@@ -42,7 +44,10 @@ class OAS(object):
     @property
     def middleware(self):
         return Middleware(
-            self.spec, formats=self.formats, base_module=self.base_module
+            self.spec,
+            formats=self.formats,
+            base_module=self.base_module,
+            security_handlers=self.security_handlers,
         )
 
     def setup(self, api):
