@@ -21,7 +21,7 @@ def session_cookie_loader(value, scopes, req):
 
 class PetCollection(object):
     def on_get(self, req, resp):
-        pass
+        resp.media = []
 
     def on_post(self, req, resp):
         resp.status = falcon.HTTP_CREATED
@@ -116,3 +116,45 @@ def test_oas_without_middleware(spec_dict):
 
     response = client.simulate_delete(path='/api/v1/pets/42')
     assert response.status == falcon.HTTP_NO_CONTENT
+
+
+def test_oas_with_resolvers(petstore_dict):
+    oas = OAS(petstore_dict, base_module='tests')
+    oas.resolve_path_item('/v1/pets', PetCollection())
+    oas.resolve_path_item('/v1/pets/{pet_id}', PetItem())
+    oas.resolve_security_scheme('session', session_cookie_loader)
+    api = oas.create_api()
+
+    client = testing.TestClient(api)
+
+    # pets collection
+    response = client.simulate_get(path='/api/v1/pets')
+    assert response.status == falcon.HTTP_OK
+    assert response.json == []
+
+    # pet item
+    response = client.simulate_get(path='/api/v1/pets/42')
+    assert response.status == falcon.HTTP_OK
+    assert response.json == {'id': 42}
+
+    # security error
+    response = client.simulate_delete(path='/api/v1/pets/42')
+    assert response.status == falcon.HTTP_FORBIDDEN
+    assert response.headers['Content-Type'] == 'application/problem+json'
+
+    response = client.simulate_delete(
+        path='/api/v1/pets/42', headers={'Cookie': str('session=1')}
+    )
+    assert response.status == falcon.HTTP_NO_CONTENT
+
+
+def test_oas_resolve_path_item_with_invalid_path(petstore_dict):
+    oas = OAS(petstore_dict, base_module='tests')
+    with pytest.raises(KeyError):
+        oas.resolve_path_item('/xx/pets', PetCollection())
+
+
+def test_oas_resolve_security_scheme_with_invalid_name(petstore_dict):
+    oas = OAS(petstore_dict, base_module='tests')
+    with pytest.raises(KeyError):
+        oas.resolve_security_scheme('invalid-name', session_cookie_loader)

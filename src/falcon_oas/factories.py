@@ -9,6 +9,7 @@ from oas.exceptions import UndocumentedMediaType
 from oas.exceptions import UnmarshalError
 
 from .exceptions import SecurityError
+from .extensions import IMPLEMENTATION
 from .middlewares import Middleware
 from .problems import http_error_handler
 from .problems import security_error_handler
@@ -64,3 +65,11 @@ class OAS(object):
             api.add_route(uri_template, resource_class())
 
         return api
+
+    def resolve_path_item(self, path, resource):
+        path_item = self.spec['paths'][path]
+        path_item[IMPLEMENTATION] = lambda: resource
+
+    def resolve_security_scheme(self, name, handler):
+        security_scheme = self.spec['components']['securitySchemes'][name]
+        security_scheme[IMPLEMENTATION] = handler
