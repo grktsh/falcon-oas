@@ -5,12 +5,12 @@ falcon-oas
    :alt: PyPI
    :target: https://pypi.org/project/falcon-oas
 
-.. image:: https://img.shields.io/travis/grktsh/falcon-oas/master.svg
-   :alt: Travis
-   :target: https://travis-ci.org/grktsh/falcon-oas
+.. image:: https://github.com/grktsh/falcon-oas/workflows/CI/badge.svg
+   :alt: CI
+   :target: https://github.com/grktsh/falcon-oas/actions
 
-.. image:: https://img.shields.io/codecov/c/github/grktsh/falcon-oas/master.svg
-   :alt: Codecov
+.. image:: https://codecov.io/gh/grktsh/falcon-oas/branch/master/graph/badge.svg
+   :alt: Coverage
    :target: https://codecov.io/gh/grktsh/falcon-oas
 
 Prerequisites
