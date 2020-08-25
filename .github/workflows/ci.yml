@@ -19,6 +19,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          # Make setuptools_scm able to guess the version.
+          # actions/checkout#249
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
