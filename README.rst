@@ -81,9 +81,9 @@ Here is the part of its OpenAPI 3 document in YAML:
 
 ``DELETE /api/v1/pets/{pet_id}`` requests are protected by the ``api_key`` security scheme. The corresponding responder is processed only if it grants the request. Otherwise, 403 Forbidden error occurs automatically.
 
-``x-falcon-oas-implementation`` associates Path Item Object and the REST resource class in Falcon so that falcon-oas automatically calls ``falcon.API.add_route`` with its path and the resource instance.
+``x-falcon-oas-implementation`` associates Path Item Object and the REST resource class in Falcon so that falcon-oas automatically calls ``falcon.API.add_route`` with its path and the resource instance. Alternatively, the resource instance can be set programmatically using ``oas.resolve_path_item('/api/v1/pets/{pet_id}', PetItem())``, which allows to inject dependencies into the resource instance.
 
-Also ``x-falcon-oas-implementation`` associates Security Scheme Object and the access control function so that falcon-oas automatically handles Security Requirement Object in each request. See ``falcon_oas.extensions`` for details.
+Also ``x-falcon-oas-implementation`` associates Security Scheme Object and the access control function so that falcon-oas automatically handles Security Requirement Object in each request. See ``falcon_oas.extensions`` for details. Alternatively, the access control function can be set programmatically using ``oas.resolve_security_scheme('api_key', validate_api_key)``, which allows to inject dependencies into the access control function.
 
 ``req.context['oas']``
 ----------------------
