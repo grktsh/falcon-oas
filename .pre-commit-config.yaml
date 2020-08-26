@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/asottile/reorder_python_imports
-  rev: v1.8.0
+  rev: v2.3.5
   hooks:
   - id: reorder-python-imports
     args:
@@ -12,12 +12,12 @@ repos:
   - id: ffffff
 
 - repo: https://gitlab.com/pycqa/flake8
-  rev: 3.7.9
+  rev: 3.8.3
   hooks:
   - id: flake8
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.4.0
+  rev: v3.2.0
   hooks:
   - id: end-of-file-fixer
   - id: trailing-whitespace
